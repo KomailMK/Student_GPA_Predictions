@@ -118,7 +118,7 @@ The exact pinned packages used to build, train, and run this project:
 - **HTML5 & Jinja2 Templates**
 - **Custom CSS3**: Modular warm palette, CSS variables, glassmorphism, responsive grid & flexbox layouts.
 - **JavaScript (ES6)**: Real-time slider sync, interactive OTP paste/input management, dynamic SVG ring animation, and word-by-word text revealing.
-- **Typography**: Google Fonts — *Fraunces* (editorial serif headings), *Plus Jakarta Sans* (clean modern body), *JetBrains Mono* (code/metrics).
+- **Typography**: Google Fonts *Fraunces* (editorial serif headings), *Plus Jakarta Sans* (clean modern body), *JetBrains Mono* (code/metrics).
 - **Libraries (CDN)**:
   - [Animate On Scroll (AOS)](https://michalsnik.github.io/aos/) `2.3.4`
   - [Font Awesome Icons](https://fontawesome.com/) `6.4.0`
