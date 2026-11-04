@@ -119,7 +119,7 @@ The exact pinned packages used to build, train, and run this project:
 - **HTML5 & Jinja2 Templates**
 - **Custom CSS3**: Modular warm palette, CSS variables, glassmorphism, responsive grid & flexbox layouts.
 - **JavaScript (ES6)**: Real-time slider sync, interactive OTP paste/input management, dynamic SVG ring animation, and word-by-word text revealing.
-- **Typography**: Google Fonts — *Fraunces* (editorial serif headings), *Plus Jakarta Sans* (clean modern body), *JetBrains Mono* (code/metrics).
+- **Typography**: Google Fonts *Fraunces* (editorial serif headings), *Plus Jakarta Sans* (clean modern body), *JetBrains Mono* (code/metrics).
 - **Libraries (CDN)**:
   - [Animate On Scroll (AOS)](https://michalsnik.github.io/aos/) `2.3.4`
   - [Font Awesome Icons](https://fontawesome.com/) `6.4.0`
@@ -306,11 +306,11 @@ To recreate the dataset and retrain the model locally at any time:
 
 - **Author**: Komail Ahmad
 - **Email**: [komikhalils091@gmail.com](mailto:komikhalils091@gmail.com)
-- **GitHub**: [@komailahmad](https://github.com/komailahmad)
-- **LinkedIn**: [Komail Ahmad](https://www.linkedin.com/in/komail-ahmad)
+- **GitHub**: [@KomailMK](https://github.com/KomailMK)
+- **LinkedIn**: [Komail Ahmad](https://www.linkedin.com/in/get-in-touch-with-komail-ahmad)
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE) — feel free to fork, customize, and extend it for academic and non-commercial use.
+This project is licensed under the [MIT License](LICENSE) feel free to fork, customize, and extend it for academic and non-commercial use.
