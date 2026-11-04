@@ -7,6 +7,8 @@ from email.message import EmailMessage
 import joblib
 import numpy as np
 import pandas as pd
+import pymysql
+import pymysql.cursors
 from dotenv import load_dotenv
 from email_validator import validate_email, EmailNotValidError
 from flask import Flask, request, render_template, redirect, url_for, session, flash
@@ -16,10 +18,6 @@ load_dotenv(override=True)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")
-
-# Ensure users.txt exists
-if not os.path.exists('users.txt'):
-    open('users.txt', 'w').close()
 
 FEATURE_COLUMNS = [
     'attendance',
@@ -33,8 +31,83 @@ FEATURE_COLUMNS = [
 def clean_env(key, default=""):
     """Read an environment variable and strip inline comments and surrounding quotes."""
     val = os.environ.get(key, default) or default
-    val = val.split('#')[0].strip().strip('"').strip("'")
+    val = str(val).split('#')[0].strip().strip('"').strip("'")
     return val
+
+
+def get_db_connection(include_db=True):
+    """Create and return a MySQL connection using configuration from environment variables."""
+    host = clean_env("MYSQL_HOST", "localhost")
+    port = int(clean_env("MYSQL_PORT", "3306"))
+    user = clean_env("MYSQL_USER", "root")
+    password = clean_env("MYSQL_PASSWORD", "")
+    db_name = clean_env("MYSQL_DB", "gpa_predictor")
+
+    conn_params = {
+        "host": host,
+        "port": port,
+        "user": user,
+        "password": password,
+        "charset": "utf8mb4",
+        "autocommit": True,
+        "cursorclass": pymysql.cursors.DictCursor
+    }
+    if include_db:
+        conn_params["database"] = db_name
+
+    return pymysql.connect(**conn_params)
+
+
+def init_db():
+    """Ensure the MySQL database and users table exist, and perform one-time migration if legacy users.txt exists."""
+    db_name = clean_env("MYSQL_DB", "gpa_predictor")
+    try:
+        # Step 1: Ensure database exists
+        conn_server = get_db_connection(include_db=False)
+        with conn_server.cursor() as cur:
+            cur.execute(f"CREATE DATABASE IF NOT EXISTS `{db_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+        conn_server.close()
+
+        # Step 2: Ensure users table exists
+        conn_db = get_db_connection(include_db=True)
+        with conn_db.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    hashed_name VARCHAR(64) NOT NULL,
+                    hashed_email VARCHAR(64) NOT NULL UNIQUE,
+                    hashed_password VARCHAR(64) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_hashed_email (hashed_email),
+                    INDEX idx_email (email)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """)
+
+            # Step 3: Optional one-time migration if legacy users.txt exists
+            if os.path.exists('users.txt'):
+                try:
+                    with open('users.txt', 'r') as f:
+                        for line in f:
+                            parts = [p.strip() for p in line.strip().split(',') if p.strip()]
+                            if len(parts) >= 3:
+                                h_name, h_email, h_pwd = parts[0], parts[1], parts[2]
+                                cur.execute("""
+                                    INSERT IGNORE INTO users (name, email, hashed_name, hashed_email, hashed_password)
+                                    VALUES (%s, %s, %s, %s, %s)
+                                """, ('Legacy User', 'legacy@user.local', h_name, h_email, h_pwd))
+                except Exception as mig_err:
+                    print(f"Notice: legacy users.txt migration skipped ({mig_err}).")
+
+        conn_db.close()
+        print("MySQL database and 'users' table verified successfully.")
+    except Exception as e:
+        print(f"Warning: Could not initialize MySQL database ({e}). Please verify MySQL is running and .env credentials are correct.")
+
+
+# Initialize MySQL database on startup
+init_db()
 
 
 def load_or_repair_model():
@@ -70,7 +143,7 @@ def load_or_repair_model():
         pipeline = Pipeline([
             ('imputer', SimpleImputer(strategy='mean')),
             ('scaler', MinMaxScaler()),
-            ('model', RandomForestRegressor(random_state=42))
+            ('model', RandomForestRegressor(n_estimators=120, max_depth=16, min_samples_leaf=2, random_state=42))
         ])
         pipeline.fit(X_train, y_train)
         os.makedirs('models', exist_ok=True)
@@ -86,24 +159,27 @@ def hash_data(data):
 
 
 def is_email_registered(email):
-    """Check if the email (exact or lowercase hash) is already verified and saved in users.txt."""
+    """Check if the email (plain text, exact hash, or lowercase hash) is registered in the MySQL database."""
     exact_hash = hash_data(email)
     normalized_hash = hash_data(email.strip().lower())
+    clean_email = email.strip()
 
-    if not os.path.exists('users.txt'):
+    try:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                sql = """
+                    SELECT id FROM users
+                    WHERE hashed_email = %s OR hashed_email = %s OR email = %s
+                    LIMIT 1
+                """
+                cursor.execute(sql, (exact_hash, normalized_hash, clean_email))
+                return cursor.fetchone() is not None
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"Database error in is_email_registered: {e}")
         return False
-
-    with open('users.txt', 'r') as file:
-        for line in file:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split(',')
-            if len(parts) >= 2:
-                stored_email = parts[1].strip()
-                if stored_email in (exact_hash, normalized_hash, email.strip()):
-                    return True
-    return False
 
 
 def send_email(email, code, name=None, password=None):
@@ -163,7 +239,7 @@ def signup():
         email = request.form['email'].strip()
         password = request.form['password']
 
-        # 1. Block already-verified emails in users.txt
+        # 1. Block already-verified emails in MySQL database
         if is_email_registered(email):
             flash("This email is already in use. Please use a different email.", "danger")
             return redirect(url_for('signup'))
@@ -212,10 +288,29 @@ def verify_code():
         if user_code == session.get('code'):
             pending = session.get('pending_user')
 
-            # Save user to users.txt ONLY AFTER successful email verification
+            # Save user to MySQL users table ONLY AFTER successful email verification
             if pending and not is_email_registered(pending['raw_email']):
-                with open('users.txt', 'a') as file:
-                    file.write(f"{pending['hashed_name']},{pending['hashed_email']},{pending['hashed_password']}\n")
+                try:
+                    conn = get_db_connection()
+                    try:
+                        with conn.cursor() as cursor:
+                            sql = """
+                                INSERT INTO users (name, email, hashed_name, hashed_email, hashed_password)
+                                VALUES (%s, %s, %s, %s, %s)
+                            """
+                            cursor.execute(sql, (
+                                pending['raw_name'],
+                                pending['raw_email'],
+                                pending['hashed_name'],
+                                pending['hashed_email'],
+                                pending['hashed_password']
+                            ))
+                    finally:
+                        conn.close()
+                except Exception as db_err:
+                    print(f"Database error saving verified user: {db_err}")
+                    flash("Failed to save account to database. Please try again.", "danger")
+                    return redirect(url_for('verify_code'))
 
             session.pop('code', None)
             session.pop('pending_user', None)
@@ -260,17 +355,29 @@ def signin():
         hashed_email_lower = hash_data(email.lower())
         hashed_password = hash_data(password)
 
-        with open('users.txt', 'r') as file:
-            users = file.readlines()
-            for user in users:
-                if not user.strip():
-                    continue
-                stored_name, stored_email, stored_password = user.strip().split(',')
-                if stored_email in (hashed_email_exact, hashed_email_lower) and hashed_password == stored_password:
-                    session['email'] = email
-                    session['authenticated'] = True
-                    flash("Login successful!", "success")
-                    return redirect(url_for('index'))
+        try:
+            conn = get_db_connection()
+            try:
+                with conn.cursor() as cursor:
+                    sql = """
+                        SELECT id, name, email FROM users
+                        WHERE (hashed_email = %s OR hashed_email = %s OR email = %s)
+                          AND hashed_password = %s
+                        LIMIT 1
+                    """
+                    cursor.execute(sql, (hashed_email_exact, hashed_email_lower, email, hashed_password))
+                    user = cursor.fetchone()
+                    if user:
+                        session['email'] = email
+                        session['authenticated'] = True
+                        flash("Login successful!", "success")
+                        return redirect(url_for('index'))
+            finally:
+                conn.close()
+        except Exception as db_err:
+            print(f"Database error during signin: {db_err}")
+            flash("Database error during sign in. Please verify database connection.", "danger")
+            return redirect(url_for('signin'))
 
         flash("Incorrect email or password (or email not yet verified).", "danger")
         return redirect(url_for('signin'))

@@ -1,12 +1,13 @@
-# Student GPA Prediction System with Email Verification & Secure Authentication
+# Student GPA Prediction System with Email Verification & MySQL Authentication
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.1.3-black.svg)](https://flask.palletsprojects.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0%2B%20%7C%209.x-4479A1.svg?logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.9.1-orange.svg)](https://scikit-learn.org/)
 [![Accuracy](https://img.shields.io/badge/R%C2%B2%20Score-97.6%25-brightgreen.svg)](#-model-architecture--performance)
 
-A modern, full-stack machine learning web application that forecasts a student's end-of-semester GPA on a continuous 4.00 scale using five key academic indicators. Built with a **Flask** backend, an updated **scikit-learn Random Forest regression pipeline**, SHA-256 credential hashing, automated 6-digit SMTP email verification (OTP), and an editorial, warm-toned responsive user interface.
+A modern, full-stack machine learning web application that forecasts a student's end-of-semester GPA on a continuous 4.00 scale using five key academic indicators. Built with a **Flask** backend, an updated **scikit-learn Random Forest regression pipeline**, a **MySQL relational database** with parameterized queries and SHA-256 credential hashing, automated 6-digit SMTP email verification (OTP), and an editorial, warm-toned responsive user interface.
 
 ---
 
@@ -16,10 +17,12 @@ A modern, full-stack machine learning web application that forecasts a student's
 - [Key Features](#key-features)
 - [Model Architecture & Performance](#model-architecture--performance)
 - [Tech Stack & Package Versions](#tech-stack--package-versions)
+- [Database Schema](#database-schema)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
+  - [Database Setup](#database-setup)
   - [Environment Variables](#environment-variables)
   - [Running the Application](#running-the-application)
 - [Dataset & Model Retraining](#dataset--model-retraining)
@@ -39,12 +42,14 @@ Predicting academic performance early allows students and advisors to make timel
 4. **Quiz Performance (%)**: Continuous assessment and test score average (0% – 100%).
 5. **Class Participation (1–10)**: Active classroom engagement score (1 – 10).
 
-The machine learning pipeline analyzes these factors and outputs a predicted GPA alongside a nuanced academic standing recommendation.
+The machine learning pipeline analyzes these factors and outputs a predicted GPA alongside a nuanced academic standing recommendation. User accounts and authentication are managed through a persistent **MySQL relational database**.
 
 ---
 
 ## Key Features
 
+- **MySQL Database Authentication**: User accounts, email verification records, and SHA-256 password digests are persisted in a relational MySQL database with parameterized queries (`pymysql`) and indexing.
+- **Auto Database Initialization**: The application automatically checks, creates the database (`gpa_predictor`), and provisions the `users` table upon server startup.
 - **High-Precision ML Forecasting**: 97.6% $R^2$ accuracy model trained on 4,000 synthesized student records with realistic academic correlation weighting.
 - **Dynamic Circular Progress Ring**: Animated SVG gauge that fills to the predicted score, color-coded by standing (Sage green, Amber, Coral, Rose).
 - **Word-by-Word Blur Reveal**: Predicted standing narrative smoothly transitions from blurred to sharp, word-by-word.
@@ -95,14 +100,19 @@ flowchart LR
 The exact pinned packages used to build, train, and run this project:
 
 | Package | Version | Purpose |
-| :--- | :--- | :--- |
+| :--- | :---: | :--- |
 | **[Flask](https://pypi.org/project/Flask/)** | `3.1.3` | Lightweight web backend and route management |
+| **[PyMySQL](https://pypi.org/project/PyMySQL/)** | `1.2.3` | Pure-Python MySQL client with parameterized query support |
 | **[scikit-learn](https://pypi.org/project/scikit-learn/)** | `1.9.1` | ML preprocessing pipeline and Random Forest regressor |
 | **[joblib](https://pypi.org/project/joblib/)** | `1.6.0` | High-efficiency model serialization and loading |
 | **[pandas](https://pypi.org/project/pandas/)** | `3.0.6` | Dataset manipulation, DataFrame feature alignment |
 | **[numpy](https://pypi.org/project/numpy/)** | `2.5.3` | Numerical computing, vector scaling, and clipping |
 | **[python-dotenv](https://pypi.org/project/python-dotenv/)** | `1.2.2` | Loading environment variables from `.env` |
 | **[email-validator](https://pypi.org/project/email-validator/)** | `2.3.0` | Strict email syntax validation during sign-up |
+
+### Database
+- **MySQL 8.0+ / 9.x** (or MariaDB 10.4+)
+- Character Set: `utf8mb4`, Collation: `utf8mb4_unicode_ci`
 
 ### Frontend & Styling
 - **HTML5 & Jinja2 Templates**
@@ -115,13 +125,39 @@ The exact pinned packages used to build, train, and run this project:
 
 ---
 
+## Database Schema
+
+The database schema is defined in [`schema.sql`](schema.sql):
+
+```sql
+CREATE DATABASE IF NOT EXISTS gpa_predictor
+    DEFAULT CHARACTER SET utf8mb4
+    DEFAULT COLLATE utf8mb4_unicode_ci;
+
+USE gpa_predictor;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    hashed_name VARCHAR(64) NOT NULL,
+    hashed_email VARCHAR(64) NOT NULL UNIQUE,
+    hashed_password VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_hashed_email (hashed_email),
+    INDEX idx_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
 ## Project Structure
 
 ```text
 Student-GPA-Prediction-System/
-├── app.py                     # Main Flask application and routing logic
-├── requirements.txt           # Pinned Python package dependencies
-├── users.txt                  # User credential storage (SHA-256 hashes)
+├── app.py                     # Main Flask application, MySQL queries & routing logic
+├── schema.sql                 # MySQL schema DDL (database & table creation)
+├── requirements.txt           # Pinned Python package dependencies (including PyMySQL)
 ├── .env                       # Environment configuration (ignored by git)
 │
 ├── models/
@@ -160,6 +196,7 @@ Student-GPA-Prediction-System/
 
 - **Python**: Version `3.10` or higher (tested with Python 3.10 – 3.13)
 - **pip** package manager
+- **MySQL Server**: Version `8.0` or higher / `9.x` (or MariaDB 10.4+)
 
 ### Installation
 
@@ -185,15 +222,35 @@ Student-GPA-Prediction-System/
    pip install -r requirements.txt
    ```
 
+### Database Setup
+
+You have two options to set up the MySQL database:
+
+- **Option A (Automatic - Recommended)**: Simply ensure your MySQL server is running. When you launch `python app.py`, the built-in `init_db()` function will automatically create the `gpa_predictor` database and `users` table if they do not already exist.
+- **Option B (Manual via CLI)**:
+  ```bash
+  mysql -u root -p < schema.sql
+  ```
+
 ### Environment Variables
 
-Create a `.env` file in the project root directory with your secret key and Gmail SMTP credentials:
+Create or update a `.env` file in the project root directory:
 
 ```ini
+# Flask Session Key
 SECRET_KEY=your_super_secret_session_key
+
+# SMTP 2FA Email Configuration
 SENDER_EMAIL=your_email@gmail.com
 SENDER_PASSWORD=your_gmail_app_password
 SMTP_SERVER=smtp.gmail.com
+
+# MySQL Database Configuration
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=your_mysql_password
+MYSQL_DB=gpa_predictor
 ```
 
 > **Note**: For Gmail, generate a 16-character **App Password** via [Google Account Security](https://myaccount.google.com/apppasswords). Do not use your regular account password.
@@ -233,8 +290,10 @@ To recreate the dataset and retrain the model locally at any time:
 
 ## Security Architecture
 
+- **Database-Driven Accounts**: Replaced flat-file `.txt` storage with a relational MySQL database.
+- **SQL Injection Prevention**: All queries utilize parameterized `%s` statements executed through PyMySQL.
 - **Hashed Passwords**: User passwords are never saved in plain text. Credentials use SHA-256 digests (`hashlib.sha256`) during registration and authentication.
-- **Two-Factor Email Verification**: Newly registered accounts remain pending in temporary session memory until the 6-digit OTP received via Gmail TLS SMTP (port 587) is validated.
+- **Two-Factor Email Verification**: Newly registered accounts remain pending in temporary session memory until the 6-digit OTP received via Gmail TLS SMTP (port 587) is validated. Only upon verification is the record committed to the MySQL database.
 - **Session Authentication Guard**: The predictor workspace (`/index`) is strictly guarded; unauthenticated requests are redirected to `/signin`.
 - **Defensive Error Handling**: Input syntax is checked before submission, preventing invalid form submissions and brute-force errors.
 
