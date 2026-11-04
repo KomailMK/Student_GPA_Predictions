@@ -310,4 +310,4 @@ To recreate the dataset and retrain the model locally at any time:
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE) — feel free to fork, customize, and extend it for academic and non-commercial use.
+This project is licensed under the [MIT License](LICENSE) feel free to fork, customize, and extend it for academic and non-commercial use.
