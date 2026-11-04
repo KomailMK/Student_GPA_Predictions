@@ -2,6 +2,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     /* ---------- Scroll animations (AOS) ---------- */
+    // Sideways slides start ~100px off-screen, which causes horizontal overflow on phones.
+    if (window.matchMedia('(max-width: 960px)').matches) {
+        document.querySelectorAll('[data-aos^="fade-left"], [data-aos^="fade-right"]').forEach((el) => {
+            el.setAttribute('data-aos', 'fade-up');
+        });
+    }
     if (window.AOS) {
         AOS.init({
             duration: 800,
