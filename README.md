@@ -303,7 +303,7 @@ To recreate the dataset and retrain the model locally at any time:
 
 - **Author**: Komail Ahmad
 - **Email**: [komikhalils091@gmail.com](mailto:komikhalils091@gmail.com)
-- **GitHub**: [@komailahmad](https://github.com/KomailMK)
+- **GitHub**: [@KomailMK](https://github.com/KomailMK)
 - **LinkedIn**: [Komail Ahmad](https://www.linkedin.com/in/get-in-touch-with-komail-ahmad)
 
 ---
