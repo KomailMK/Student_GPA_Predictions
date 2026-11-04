@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Your Workspace — GPA Predictor{% endblock %}
+{% block title %}Your Workspace! GPA Predictor{% endblock %}
 {% block content %}
 {% set factors = [
     {'id': 'attendance', 'label': 'Attendance', 'hint': 'How often you show up to class', 'icon': 'fa-calendar-check', 'tone': 'terracotta', 'min': 0, 'max': 100, 'step': 1, 'default': 80, 'format': 'pct', 'bounds': ['0%', '50%', '100%']},
@@ -54,7 +54,7 @@
 
         {% if predicted_gpa is not none %}
             {% if predicted_gpa >= 3.5 %}
-                {% set standing, tone, msg = 'Excellent', 'high', "You're on track for an outstanding semester. Keep that rhythm going — it's clearly working." %}
+                {% set standing, tone, msg = 'Excellent', 'high', "You're on track for an outstanding semester. Keep that rhythm going, it's clearly working." %}
             {% elif predicted_gpa >= 3.0 %}
                 {% set standing, tone, msg = 'Great job', 'high', "You're performing solidly above average. A little extra polish could lift you into the top tier." %}
             {% elif predicted_gpa >= 2.5 %}
@@ -62,7 +62,7 @@
             {% elif predicted_gpa >= 2.0 %}
                 {% set standing, tone, msg = 'Passing', 'mid', "You're passing, with real room to grow. Focusing on study hours and quiz prep will make the biggest difference." %}
             {% else %}
-                {% set standing, tone, msg = 'At risk', 'low', "This is a signal, not a verdict. Reach out to your advisor early — small changes now go a long way." %}
+                {% set standing, tone, msg = 'At risk', 'low', "This is a signal, not a verdict. Reach out to your advisor early, small changes now go a long way." %}
             {% endif %}
 
             <div class="ring-wrap standing-{{ tone }}">

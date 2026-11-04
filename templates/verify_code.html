@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% from 'partials/auth_aside.html' import auth_aside %}
-{% block title %}Verify Email — GPA Predictor{% endblock %}
+{% block title %}Verify Email! GPA Predictor{% endblock %}
 {% block content %}
 <section class="auth-shell">
     {{ auth_aside(
         'Almost there',
         'Check your <em>inbox</em>.',
-        "We've sent a 6-digit code to your email. It usually arrives within a few seconds — peek in spam if it doesn't.",
+        "We've sent a 6-digit code to your email. It usually arrives within a few seconds, peek in spam if it doesn't.",
         [('fa-envelope-open-text', 'Code sent to your email'), ('fa-shield-halved', 'Keeps your account yours'), ('fa-rotate', 'Resend anytime')],
         'A journey of a thousand miles begins with a single step.',
         'Lao Tzu'
