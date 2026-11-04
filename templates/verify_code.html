@@ -38,10 +38,67 @@
             <button type="submit" class="btn btn-primary btn-lg btn-block">Verify &amp; create account <i class="fas fa-check"></i></button>
         </form>
 
-        <form action="{{ url_for('resend_code') }}" method="POST" class="auth-footer">
+        <form action="{{ url_for('resend_code') }}" method="POST" class="auth-footer" id="resend-form">
             <span>Didn't get the code?</span>
-            <button type="submit" class="link-btn link-underline">Resend code</button>
+            <button type="submit" class="link-btn link-underline" id="resend-btn">Resend code</button>
         </form>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const resendForm = document.getElementById('resend-form');
+        const resendBtn = document.getElementById('resend-btn');
+
+        if (resendForm && resendBtn) {
+            resendForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                resendBtn.disabled = true;
+                const originalHtml = resendBtn.innerHTML;
+                resendBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Sending…';
+
+                fetch(resendForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        if (window.showToast) {
+                            window.showToast(data.message || 'Verification code resent! Check your inbox.', 'success');
+                        }
+                        let countdown = 30;
+                        resendBtn.textContent = `Resend in ${countdown}s`;
+                        const timer = setInterval(() => {
+                            countdown--;
+                            if (countdown <= 0) {
+                                clearInterval(timer);
+                                resendBtn.disabled = false;
+                                resendBtn.innerHTML = originalHtml;
+                            } else {
+                                resendBtn.textContent = `Resend in ${countdown}s`;
+                            }
+                        }, 1000);
+                    } else {
+                        throw new Error(data.error || 'Failed to resend code');
+                    }
+                })
+                .catch(err => {
+                    if (window.showToast) {
+                        window.showToast(err.message || 'Failed to resend code.', 'danger');
+                    } else {
+                        alert(err.message || 'Failed to resend code.');
+                    }
+                    resendBtn.disabled = false;
+                    resendBtn.innerHTML = originalHtml;
+                });
+            });
+        }
+    })();
+</script>
 {% endblock %}

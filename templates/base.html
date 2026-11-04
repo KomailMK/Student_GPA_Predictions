@@ -82,9 +82,9 @@
 
     <!-- ===== Toasts: success / info only. Errors render inline on form pages. ===== -->
     {% set inline_error_pages = ['signin', 'signup', 'verify_code', 'index'] %}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="toast-stack" aria-live="polite">
+    <div class="toast-stack" id="toast-stack" aria-live="polite">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
                 {% for category, message in messages %}
                     {% set is_error = category in ['danger', 'error'] %}
                     {% if not (is_error and request.endpoint in inline_error_pages) %}
@@ -96,9 +96,9 @@
                         </div>
                     {% endif %}
                 {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+            {% endif %}
+        {% endwith %}
+    </div>
 
     <main class="main-container">
         {% block content %}{% endblock %}

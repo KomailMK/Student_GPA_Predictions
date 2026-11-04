@@ -640,6 +640,26 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
 .standing.is-visible .standing-pill { opacity: 1; transform: none; }
 .standing .reveal-text, .preview-msg.reveal-text { font-family: var(--font-serif); }
 .standing .reveal-text { font-size: 1.28rem; line-height: 1.45; max-width: 32ch; margin: 16px auto 0; color: var(--ink); }
+.reveal-text {
+    opacity: 0;
+    transition: opacity 0.3s var(--ease);
+}
+.reveal-text.is-revealed {
+    opacity: 1;
+}
+.reveal-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
+    transition: opacity 0.45s var(--ease), transform 0.45s var(--ease), filter 0.45s var(--ease);
+    transition-delay: calc(var(--i, 0) * 45ms);
+}
+.reveal-text.is-revealed .reveal-word {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+}
 .empty-msg { color: var(--ink-2); max-width: 30ch; margin: 0 auto; }
 
 .summary { margin-top: 26px; padding-top: 20px; border-top: 1px dashed #DCC5AC; }

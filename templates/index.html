@@ -64,36 +64,26 @@
             {% else %}
                 {% set standing, tone, msg = 'At risk', 'low', "This is a signal, not a verdict. Reach out to your advisor early, small changes now go a long way." %}
             {% endif %}
-
-            <div class="ring-wrap standing-{{ tone }}">
-                <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
-                    <circle class="ring-track" cx="100" cy="100" r="86" />
-                    <circle class="ring-progress" cx="100" cy="100" r="86" pathLength="100" />
-                </svg>
-                <div class="ring-center">
-                    <strong class="ring-value" data-ring-value="{{ '%.2f'|format(predicted_gpa) }}" aria-label="Predicted GPA {{ '%.2f'|format(predicted_gpa) }}">0.00</strong>
-                    <span class="ring-scale">predicted GPA</span>
-                </div>
-            </div>
-
-            <div class="standing standing-{{ tone }}">
-                <span class="standing-pill">{{ standing }}</span>
-                <p class="reveal-text">{{ msg }}</p>
-            </div>
-        {% else %}
-            <div class="ring-wrap is-empty">
-                <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
-                    <circle class="ring-track" cx="100" cy="100" r="86" />
-                </svg>
-                <div class="ring-center">
-                    <strong class="ring-value">--.--</strong>
-                    <span class="ring-scale">awaiting input</span>
-                </div>
-            </div>
-            <div class="standing">
-                <p class="empty-msg">Move the sliders and hit <strong>Predict my GPA</strong> to see your forecast here.</p>
-            </div>
         {% endif %}
+
+        <div class="ring-wrap {% if predicted_gpa is not none %}standing-{{ tone }}{% else %}is-empty{% endif %}" id="forecast-ring-wrap">
+            <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+                <circle class="ring-track" cx="100" cy="100" r="86" />
+                <circle class="ring-progress" cx="100" cy="100" r="86" pathLength="100" />
+            </svg>
+            <div class="ring-center">
+                <strong class="ring-value" id="forecast-ring-value" {% if predicted_gpa is not none %}data-ring-value="{{ '%.2f'|format(predicted_gpa) }}" aria-label="Predicted GPA {{ '%.2f'|format(predicted_gpa) }}"{% endif %}>
+                    {% if predicted_gpa is not none %}{{ '%.2f'|format(predicted_gpa) }}{% else %}--.--{% endif %}
+                </strong>
+                <span class="ring-scale" id="forecast-ring-scale">{% if predicted_gpa is not none %}predicted GPA{% else %}awaiting input{% endif %}</span>
+            </div>
+        </div>
+
+        <div class="standing {% if predicted_gpa is not none %}standing-{{ tone }} is-visible{% endif %}" id="forecast-standing">
+            <span class="standing-pill" id="forecast-pill" {% if predicted_gpa is none %}style="display:none;"{% endif %}>{{ standing if standing else '' }}</span>
+            <p class="reveal-text" id="forecast-msg" {% if predicted_gpa is none %}style="display:none;"{% endif %}>{{ msg if msg else '' }}</p>
+            <p class="empty-msg" id="forecast-empty-msg" {% if predicted_gpa is not none %}style="display:none;"{% endif %}>Move the sliders and hit <strong>Predict my GPA</strong> to see your forecast here.</p>
+        </div>
 
         <div class="summary">
             <span class="summary-title">Your inputs</span>
@@ -135,17 +125,134 @@
         });
 
         const form = document.getElementById('prediction-form');
-        form.addEventListener('submit', function () {
-            const button = this.querySelector('button[type="submit"]');
-            button.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span>Crunching the numbers…</span>';
-            button.classList.add('is-loading');
-            button.disabled = true;
+        const resultCard = document.getElementById('result-card');
+        const ringWrap = document.getElementById('forecast-ring-wrap');
+        const ringProgress = ringWrap ? ringWrap.querySelector('.ring-progress') : null;
+        const ringValue = document.getElementById('forecast-ring-value');
+        const ringScale = document.getElementById('forecast-ring-scale');
+        const standingBox = document.getElementById('forecast-standing');
+        const standingPill = document.getElementById('forecast-pill');
+        const standingMsg = document.getElementById('forecast-msg');
+        const emptyMsg = document.getElementById('forecast-empty-msg');
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        let animFrameId = null;
+
+        function renderPrediction(data) {
+            const targetGpa = parseFloat(data.predicted_gpa);
+            const tone = data.tone || 'high';
+            const standing = data.standing || 'Good standing';
+            const msg = data.message || '';
+
+            resultCard.classList.add('has-result');
+
+            if (emptyMsg) emptyMsg.style.display = 'none';
+
+            if (standingPill) {
+                standingPill.style.display = '';
+                standingPill.textContent = standing;
+            }
+
+            if (standingMsg) {
+                standingMsg.style.display = '';
+                standingMsg.textContent = msg;
+                delete standingMsg.dataset.split;
+                standingMsg.classList.remove('is-revealed');
+            }
+
+            ringWrap.className = `ring-wrap standing-${tone}`;
+            standingBox.className = `standing standing-${tone}`;
+            if (ringScale) ringScale.textContent = 'predicted GPA';
+
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const duration = reduceMotion ? 0 : 1300;
+            const startVal = parseFloat(ringValue.textContent) || 0;
+            const startTime = performance.now();
+            const ease = (t) => 1 - Math.pow(1 - t, 3);
+            const targetOffset = Math.max(0, Math.min(100, 100 - (targetGpa / 4.0) * 100));
+
+            if (ringProgress) {
+                requestAnimationFrame(() => {
+                    ringProgress.style.transitionDuration = `${duration}ms, 300ms`;
+                    ringProgress.style.opacity = '1';
+                    ringProgress.style.strokeDashoffset = targetOffset;
+                });
+            }
+
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+
+            const tick = (now) => {
+                const elapsed = duration ? Math.min((now - startTime) / duration, 1) : 1;
+                const currentVal = startVal + (targetGpa - startVal) * ease(elapsed);
+                ringValue.textContent = currentVal.toFixed(2);
+                ringValue.setAttribute('aria-label', `Predicted GPA ${targetGpa.toFixed(2)}`);
+
+                if (elapsed < 1) {
+                    animFrameId = requestAnimationFrame(tick);
+                } else {
+                    ringValue.textContent = targetGpa.toFixed(2);
+                    ringWrap.classList.add('is-done');
+                    standingBox.classList.add('is-visible');
+
+                    if (window.revealWords && standingMsg) {
+                        window.revealWords(standingMsg);
+                    }
+                }
+            };
+            animFrameId = requestAnimationFrame(tick);
+
+            if (window.matchMedia('(max-width: 960px)').matches) {
+                setTimeout(() => resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 120);
+            }
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            submitBtn.disabled = true;
+            submitBtn.classList.add('is-loading');
+            submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span>Calculating your GPA…</span>';
+
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(json => { throw new Error(json.error || 'Prediction request failed'); });
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to calculate prediction');
+                }
+                renderPrediction(data);
+            })
+            .catch(err => {
+                console.error(err);
+                if (window.showToast) {
+                    window.showToast(err.message || 'Error calculating GPA. Please check your inputs.', 'danger');
+                } else {
+                    alert(err.message || 'Error calculating GPA. Please check your inputs.');
+                }
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('is-loading');
+                submitBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>Predict my GPA</span>';
+            });
         });
 
-        // On smaller screens, bring the fresh result into view.
-        const result = document.getElementById('result-card');
-        if (result.classList.contains('has-result') && window.matchMedia('(max-width: 960px)').matches) {
-            setTimeout(() => result.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
+        // If page loaded with a pre-existing result, scroll to it on small screens
+        if (resultCard.classList.contains('has-result') && window.matchMedia('(max-width: 960px)').matches) {
+            setTimeout(() => resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
         }
     })();
 </script>

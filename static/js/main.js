@@ -181,6 +181,34 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    /* ---------- Dynamic Toast Helper ---------- */
+    window.showToast = function (message, type = 'success') {
+        let stack = document.querySelector('.toast-stack');
+        if (!stack) {
+            stack = document.createElement('div');
+            stack.className = 'toast-stack';
+            stack.setAttribute('aria-live', 'polite');
+            document.body.appendChild(stack);
+        }
+        const isError = type === 'error' || type === 'danger';
+        const toast = document.createElement('div');
+        toast.className = `toast ${isError ? 'toast-error' : 'toast-success'}`;
+        toast.setAttribute('role', 'status');
+        toast.innerHTML = `
+            <span class="toast-icon"><i class="fas ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i></span>
+            <p>${message}</p>
+            <button type="button" class="toast-close" aria-label="Dismiss"><i class="fas fa-xmark"></i></button>
+            <span class="toast-progress"></span>
+        `;
+        const dismiss = () => {
+            toast.classList.add('is-leaving');
+            toast.addEventListener('animationend', () => toast.remove(), { once: true });
+        };
+        toast.querySelector('.toast-close').addEventListener('click', dismiss);
+        setTimeout(dismiss, 4500);
+        stack.appendChild(toast);
+    };
+
     /* ---------- GPA rings: fill + count-up, then reveal text ---------- */
     const animateRing = (valueEl) => {
         const target = parseFloat(valueEl.dataset.ringValue);
@@ -209,22 +237,25 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const revealWords = (el) => {
-        if (!el.dataset.split) {
-            const text = el.textContent.trim();
-            el.setAttribute('aria-label', text);
-            el.textContent = '';
-            text.split(/\s+/).forEach((w, i) => {
-                const span = document.createElement('span');
-                span.className = 'reveal-word';
-                span.setAttribute('aria-hidden', 'true');
-                span.style.setProperty('--i', i);
-                span.textContent = w;
-                el.append(span, ' ');
-            });
-            el.dataset.split = '1';
-        }
+        const text = (el.getAttribute('aria-label') || el.textContent).trim();
+        if (!text) return;
+        el.setAttribute('aria-label', text);
+        el.textContent = '';
+        el.classList.remove('is-revealed');
+
+        text.split(/\s+/).forEach((w, i) => {
+            const span = document.createElement('span');
+            span.className = 'reveal-word';
+            span.setAttribute('aria-hidden', 'true');
+            span.style.setProperty('--i', i);
+            span.textContent = w;
+            el.append(span, ' ');
+        });
+        el.dataset.split = '1';
+
         requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('is-revealed')));
     };
+    window.revealWords = revealWords;
 
     const rings = document.querySelectorAll('[data-ring-value]');
     if ('IntersectionObserver' in window) {
