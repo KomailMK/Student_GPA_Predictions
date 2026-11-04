@@ -1,75 +1,47 @@
 {% extends 'base.html' %}
-
-{% block title %}Verify Email - GPA Predictor{% endblock %}
-
+{% from 'partials/auth_aside.html' import auth_aside %}
+{% block title %}Verify Email — GPA Predictor{% endblock %}
 {% block content %}
-<div class="form-container">
-    <div class="form-header">
-        <h1 class="animated-heading">Verify Your Email</h1>
-        <p>We've sent a verification code to your email</p>
-    </div>
-    
-    <form action="{{ url_for('verify_code') }}" method="POST">
-        <div class="form-group">
-            <label for="code" class="form-label">Verification Code</label>
-            <input type="text" id="code" name="code" class="form-input" placeholder="Enter the 6-digit code" required>
+<section class="auth-shell">
+    {{ auth_aside(
+        'Almost there',
+        'Check your <em>inbox</em>.',
+        "We've sent a 6-digit code to your email. It usually arrives within a few seconds — peek in spam if it doesn't.",
+        [('fa-envelope-open-text', 'Code sent to your email'), ('fa-shield-halved', 'Keeps your account yours'), ('fa-rotate', 'Resend anytime')],
+        'A journey of a thousand miles begins with a single step.',
+        'Lao Tzu'
+    ) }}
+
+    <div class="auth-card" data-aos="fade-left" data-aos-delay="100">
+        <div class="auth-header">
+            <span class="auth-badge"><i class="fas fa-envelope-circle-check"></i></span>
+            <h1>Verify your email</h1>
+            <p>Enter the code sent to <strong>{{ session.get('email', 'your email') }}</strong>.</p>
         </div>
-        
-        <button type="submit" class="btn btn-primary btn-block">
-            <span>Verify Code</span>
-        </button>
-           
-    </form>
-    
-    <div class="form-footer">
-        <p>Didn't receive the code? Make sure to check your spam folder.</a></p>
+
+        <form action="{{ url_for('verify_code') }}" method="POST" class="auth-form js-validate" novalidate>
+            <div class="field">
+                <label for="otp-0">Verification code</label>
+                <div class="otp-group" data-otp-target="code">
+                    {% for i in range(6) %}
+                        <input type="text" id="otp-{{ i }}" class="otp-box" inputmode="numeric" maxlength="1" pattern="[0-9]*"
+                               {% if i == 0 %}autocomplete="one-time-code" autofocus{% else %}autocomplete="off"{% endif %}
+                               aria-label="Digit {{ i + 1 }}">
+                    {% endfor %}
+                </div>
+                <input type="hidden" id="code" name="code" required data-otp>
+                <p class="field-error" aria-live="polite"></p>
+            </div>
+
+            {% include 'partials/form_errors.html' %}
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Verify &amp; create account <i class="fas fa-check"></i></button>
+        </form>
+
+        <form action="{{ url_for('resend_code') }}" method="POST" class="auth-footer">
+            <span>Didn't get the code?</span>
+            <button type="submit" class="link-btn link-underline">Resend code</button>
+        </form>
     </div>
-</div>
-
-<div class="verification-decoration"></div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    .verification-decoration {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%);
-        filter: blur(80px);
-        opacity: 0.2;
-        z-index: -1;
-        animation: pulse 4s infinite alternate;
-    }
-    
-    .animated-heading span {
-        display: inline-block;
-        opacity: 0;
-        transform: translateY(20px);
-        animation: fadeInUp 0.5s forwards;
-    }
-    
-    @keyframes fadeInUp {
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.getElementById('resend-code').addEventListener('click', function(e) {
-        e.preventDefault();
-        // Here you would add AJAX to resend the code
-        this.textContent = 'Code sent!';
-        setTimeout(() => {
-            this.textContent = 'Resend Code';
-        }, 3000);
-    });
-</script>
+</section>
 {% endblock %}

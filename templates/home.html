@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}GPA Predictor — See where your semester is heading{% endblock %}
+{% block content %}
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow" data-aos="fade-up"><span class="eyebrow-dot"></span> Built for students · Powered by machine learning</span>
+        <h1 class="hero-title" data-aos="fade-up" data-aos-delay="100">
+            See where your
+            <span class="hl">
+                semester
+                <svg class="hl-underline" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true"><path d="M4 14 C 60 4, 140 4, 296 12"/></svg>
+            </span>
+            is heading.
+        </h1>
+        <p class="lead" data-aos="fade-up" data-aos-delay="200">
+            Tell us about five everyday habits — attendance, study time, past CGPA, quizzes and participation —
+            and get a warm, honest estimate of your end-of-semester GPA in seconds.
+        </p>
+        <div class="hero-actions" data-aos="fade-up" data-aos-delay="300">
+            {% if session.get('authenticated') %}
+                <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">Open my workspace <i class="fas fa-arrow-right"></i></a>
+            {% else %}
+                <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">Predict my GPA <i class="fas fa-arrow-right"></i></a>
+                <a href="{{ url_for('signin') }}" class="btn btn-outline btn-lg">I have an account</a>
+            {% endif %}
+        </div>
+        <ul class="hero-trust" data-aos="fade-up" data-aos-delay="400">
+            <li><i class="fas fa-bolt"></i> Results in seconds</li>
+            <li><i class="fas fa-shield-heart"></i> Email-verified accounts</li>
+            <li><i class="fas fa-lock"></i> Hashed credentials</li>
+        </ul>
+    </div>
+
+    <div class="hero-visual" data-aos="zoom-in-up" data-aos-delay="250" data-aos-duration="1000">
+        <div class="preview-card float spotlight">
+            <div class="preview-head">
+                <span class="preview-dot"></span><span class="preview-dot"></span><span class="preview-dot"></span>
+                <span class="preview-title">Your forecast</span>
+            </div>
+            <div class="ring-wrap ring-sm standing-high">
+                <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+                    <circle class="ring-track" cx="100" cy="100" r="86" />
+                    <circle class="ring-progress" cx="100" cy="100" r="86" pathLength="100" />
+                </svg>
+                <div class="ring-center">
+                    <strong class="ring-value" data-ring-value="3.62">0.00</strong>
+                    <span class="ring-scale">of 4.00</span>
+                </div>
+            </div>
+            <p class="preview-msg reveal-text">Excellent — you're on track for an outstanding semester.</p>
+            <div class="preview-bars">
+                <div><span>Attendance</span><i style="--w: 92%"></i></div>
+                <div><span>Study hours</span><i style="--w: 70%"></i></div>
+                <div><span>Quizzes</span><i style="--w: 84%"></i></div>
+            </div>
+        </div>
+        <div class="floating-badge badge-a float-slow"><i class="fas fa-book-open"></i> 14 hrs / week</div>
+        <div class="floating-badge badge-b float-slower"><i class="fas fa-arrow-trend-up"></i> +0.4 vs last term</div>
+    </div>
+</section>
+
+<!-- ===== Benefits ===== -->
+<section class="section" id="why">
+    <div class="section-head" data-aos="fade-up">
+        <span class="kicker">Why students use it</span>
+        <h2>A gentle nudge, <em>not</em> a judgement.</h2>
+        <p>Grades shouldn't be a surprise at the end of term. Get a clear picture early, while there's still time to adjust.</p>
+    </div>
+
+    <div class="card-grid">
+        <div data-aos="fade-up" data-aos-delay="0">
+            <article class="feature-card spotlight">
+                <span class="feature-icon tone-terracotta"><i class="fas fa-compass"></i></span>
+                <h3>Plan ahead</h3>
+                <p>See a realistic GPA estimate mid-semester, so you can set goals with confidence instead of guessing.</p>
+            </article>
+        </div>
+        <div data-aos="fade-up" data-aos-delay="120">
+            <article class="feature-card spotlight">
+                <span class="feature-icon tone-amber"><i class="fas fa-sliders"></i></span>
+                <h3>Play with "what ifs"</h3>
+                <p>Nudge your study hours or attendance and instantly see how small habit changes could shift your result.</p>
+            </article>
+        </div>
+        <div data-aos="fade-up" data-aos-delay="240">
+            <article class="feature-card spotlight">
+                <span class="feature-icon tone-sage"><i class="fas fa-user-shield"></i></span>
+                <h3>Private by design</h3>
+                <p>Your account is verified by email and your credentials are hashed — nobody can read your password.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- ===== How it works ===== -->
+<section class="section" id="how-it-works">
+    <div class="section-head" data-aos="fade-up">
+        <span class="kicker">How it works</span>
+        <h2>Three small steps to your forecast.</h2>
+        <p>From sign-up to a personalised prediction in under a minute.</p>
+    </div>
+
+    <ol class="timeline">
+        <li class="timeline-item" data-aos="fade-up" data-aos-delay="0">
+            <span class="timeline-num">1</span>
+            <div class="timeline-card">
+                <h3>Create your account</h3>
+                <p>Sign up with your name, email and a password. We'll email you a 6-digit code to confirm it's really you.</p>
+            </div>
+        </li>
+        <li class="timeline-item" data-aos="fade-up" data-aos-delay="150">
+            <span class="timeline-num">2</span>
+            <div class="timeline-card">
+                <h3>Share your habits</h3>
+                <p>Slide in your attendance, weekly study hours, previous CGPA, quiz scores and class participation.</p>
+            </div>
+        </li>
+        <li class="timeline-item" data-aos="fade-up" data-aos-delay="300">
+            <span class="timeline-num">3</span>
+            <div class="timeline-card">
+                <h3>Get your forecast</h3>
+                <p>Our trained model estimates your final GPA on a 4.0 scale — along with a friendly note on what it means.</p>
+            </div>
+        </li>
+    </ol>
+</section>
+
+<!-- ===== Under the hood ===== -->
+<section class="section" id="under-the-hood">
+    <div class="hood">
+        <div class="hood-copy" data-aos="fade-right">
+            <span class="kicker">Under the hood</span>
+            <h2>Simple on the surface, <em>solid</em> underneath.</h2>
+            <p>Predictions come from a scikit-learn Random Forest pipeline trained on student performance data. Accounts are protected with SHA-256 hashing and SMTP one-time codes.</p>
+            <a href="https://github.com/komailahmad/gpa-prediction-system" target="_blank" rel="noopener" class="link-arrow">
+                <i class="fab fa-github"></i> Explore the source on GitHub <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="hood-card" data-aos="fade-left" data-aos-delay="100">
+            <div class="hood-card-head">
+                <span>Pipeline architecture</span>
+                <code>final_gpa_model.pkl</code>
+            </div>
+            <dl class="spec-list">
+                <div><dt>Imputer</dt><dd><code>SimpleImputer(strategy='mean')</code></dd></div>
+                <div><dt>Feature scaler</dt><dd><code>MinMaxScaler(feature_range=(0, 1))</code></dd></div>
+                <div><dt>Estimator</dt><dd><code>RandomForestRegressor(n_estimators=100)</code></dd></div>
+                <div><dt>Target output</dt><dd>Clipped continuous scale <code>[0.00, 4.00]</code></dd></div>
+                <div><dt>Auth protocol</dt><dd>SHA-256 digest + 6-digit SMTP OTP</dd></div>
+            </dl>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="section">
+    <div class="cta-banner" data-aos="zoom-in-up">
+        <span class="cta-ring cta-ring-1" aria-hidden="true"></span>
+        <span class="cta-ring cta-ring-2" aria-hidden="true"></span>
+        <h2>Ready to plan your <em>best</em> semester yet?</h2>
+        <p>It's free, it takes a minute, and it might just change how you study this term.</p>
+        <div class="cta-actions">
+            {% if session.get('authenticated') %}
+                <a href="{{ url_for('index') }}" class="btn btn-light btn-lg">Go to workspace <i class="fas fa-arrow-right"></i></a>
+            {% else %}
+                <a href="{{ url_for('signup') }}" class="btn btn-light btn-lg">Create free account <i class="fas fa-arrow-right"></i></a>
+            {% endif %}
+            <a href="https://github.com/komailahmad/gpa-prediction-system" target="_blank" rel="noopener" class="btn btn-ghost-light btn-lg"><i class="fab fa-github"></i> View on GitHub</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

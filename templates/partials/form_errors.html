@@ -1,0 +1,12 @@
+{% with errors = get_flashed_messages(category_filter=['danger', 'error']) %}
+    {% if errors %}
+        <div class="form-alert" role="alert">
+            <i class="fas fa-circle-exclamation"></i>
+            <div>
+                {% for error in errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endwith %}

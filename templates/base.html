@@ -2,62 +2,159 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FBF6EF">
     <title>{% block title %}GPA Predictor{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <div class="app-container">
-        <nav class="navbar">
-            <div class="navbar-container">
-                <div class="logo">
-                    <a href="{{ url_for('index') if session.get('authenticated') else url_for('signin') }}">
-                        <span class="logo-text">GPA<span class="accent">PREDICTOR</span></span>
-                    </a>
-                </div>
-                <div class="nav-links">
-                    {% if session.get('authenticated') %}
-                        <a href="{{ url_for('index') }}" class="nav-link">Predict</a>
-                        <a href="{{ url_for('logout') }}" class="nav-link logout-btn">Logout</a>
-                    {% else %}
-                        <a href="{{ url_for('signin') }}" class="nav-link">Sign In</a>
-                        <a href="{{ url_for('signup') }}" class="nav-link">Sign Up</a>
-                    {% endif %}
-                </div>
-                <div class="menu-toggle">
-                    <i class="fas fa-bars"></i>
-                </div>
-            </div>
-        </nav>
-
-        <div class="flash-messages">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">
-                            <p>{{ message }}</p>
-                            <button class="close-btn"><i class="fas fa-times"></i></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        </div>
-
-        <main class="content">
-            {% block content %} {% endblock %}
-        </main>
-
-        <footer class="footer">
-            <div class="footer-content">
-                <p>© 2025 GPA Predictor | Built with <span class="heart">❤️</span> by Komail Ahmad</p>
-                <p>Found a bug? Reach out at <a href="mailto:komikhalils09@gmail.com">komikhalils09@gmail.com</a></p>
-            </div>
-        </footer>
+<body class="page-{{ request.endpoint }}">
+    <div class="bg-decor" aria-hidden="true">
+        <span class="blob blob-1"></span>
+        <span class="blob blob-2"></span>
+        <span class="blob blob-3"></span>
     </div>
 
+    <!-- ===== Navbar ===== -->
+    <header class="navbar" id="navbar">
+        <a href="{{ url_for('home') }}" class="brand" aria-label="GPA Predictor home">
+            <span class="brand-mark"><i class="fas fa-graduation-cap"></i></span>
+            <span class="brand-text">GPA <em>Predictor</em></span>
+        </a>
+
+        <nav class="nav-links" aria-label="Primary">
+            <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active{% endif %}">Home</a>
+            <a href="{{ url_for('home') }}#how-it-works" class="nav-link">How it works</a>
+            <a href="{{ url_for('home') }}#under-the-hood" class="nav-link">Under the hood</a>
+            {% if session.get('authenticated') %}
+                <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Workspace</a>
+            {% endif %}
+        </nav>
+
+        <div class="nav-actions">
+            <a href="https://github.com/komailahmad/gpa-prediction-system" target="_blank" rel="noopener" class="icon-btn" aria-label="GitHub repository" title="GitHub repository">
+                <i class="fab fa-github"></i>
+            </a>
+            {% if session.get('authenticated') %}
+                <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">Log out</a>
+            {% else %}
+                <a href="{{ url_for('signin') }}" class="nav-link nav-signin {% if request.endpoint == 'signin' %}active{% endif %}">Sign in</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-primary btn-sm">Get started</a>
+            {% endif %}
+        </div>
+
+        <button class="menu-toggle" id="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <!-- ===== Mobile drawer (kept outside the navbar so it can cover the viewport) ===== -->
+    <div class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
+        <nav class="drawer-links" aria-label="Mobile">
+            <a href="{{ url_for('home') }}" class="drawer-link {% if request.endpoint == 'home' %}active{% endif %}"><span>01</span>Home</a>
+            <a href="{{ url_for('home') }}#how-it-works" class="drawer-link"><span>02</span>How it works</a>
+            <a href="{{ url_for('home') }}#under-the-hood" class="drawer-link"><span>03</span>Under the hood</a>
+            {% if session.get('authenticated') %}
+                <a href="{{ url_for('index') }}" class="drawer-link {% if request.endpoint == 'index' %}active{% endif %}"><span>04</span>Workspace</a>
+            {% else %}
+                <a href="{{ url_for('signin') }}" class="drawer-link {% if request.endpoint == 'signin' %}active{% endif %}"><span>04</span>Sign in</a>
+            {% endif %}
+        </nav>
+        <div class="drawer-footer">
+            {% if session.get('authenticated') %}
+                <a href="{{ url_for('logout') }}" class="btn btn-outline btn-block">Log out</a>
+            {% else %}
+                <a href="{{ url_for('signup') }}" class="btn btn-primary btn-block">Get started <i class="fas fa-arrow-right"></i></a>
+            {% endif %}
+            <div class="drawer-socials">
+                <a href="https://github.com/komailahmad" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                <a href="https://www.linkedin.com/in/komail-ahmad" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                <a href="mailto:komikhalils091@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toasts: success / info only. Errors render inline on form pages. ===== -->
+    {% set inline_error_pages = ['signin', 'signup', 'verify_code', 'index'] %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="toast-stack" aria-live="polite">
+                {% for category, message in messages %}
+                    {% set is_error = category in ['danger', 'error'] %}
+                    {% if not (is_error and request.endpoint in inline_error_pages) %}
+                        <div class="toast {{ 'toast-error' if is_error else 'toast-success' }}" role="status">
+                            <span class="toast-icon"><i class="fas {{ 'fa-circle-exclamation' if is_error else 'fa-circle-check' }}"></i></span>
+                            <p>{{ message }}</p>
+                            <button type="button" class="toast-close" aria-label="Dismiss"><i class="fas fa-xmark"></i></button>
+                            <span class="toast-progress"></span>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main class="main-container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="{{ url_for('home') }}" class="brand brand-light">
+                    <span class="brand-mark"><i class="fas fa-graduation-cap"></i></span>
+                    <span class="brand-text">GPA <em>Predictor</em></span>
+                </a>
+                <p>A friendly forecast for your semester. Five everyday habits in, one honest GPA estimate out — so you can plan ahead, not catch up.</p>
+                <a href="mailto:komikhalils091@gmail.com" class="footer-mail"><i class="fas fa-envelope"></i> komikhalils091@gmail.com</a>
+            </div>
+
+            <div class="footer-col">
+                <h4>Explore</h4>
+                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('home') }}#how-it-works">How it works</a>
+                <a href="{{ url_for('home') }}#under-the-hood">Under the hood</a>
+                {% if session.get('authenticated') %}
+                    <a href="{{ url_for('index') }}">Workspace</a>
+                {% endif %}
+            </div>
+
+            <div class="footer-col">
+                <h4>Account</h4>
+                {% if session.get('authenticated') %}
+                    <a href="{{ url_for('index') }}">Run a prediction</a>
+                    <a href="{{ url_for('logout') }}">Log out</a>
+                {% else %}
+                    <a href="{{ url_for('signin') }}">Sign in</a>
+                    <a href="{{ url_for('signup') }}">Create account</a>
+                {% endif %}
+                <a href="https://github.com/komailahmad/gpa-prediction-system" target="_blank" rel="noopener">Source code</a>
+            </div>
+
+            <div class="footer-col">
+                <h4>Connect</h4>
+                <div class="footer-socials">
+                    <a href="https://github.com/komailahmad" target="_blank" rel="noopener" aria-label="GitHub" title="GitHub"><i class="fab fa-github"></i></a>
+                    <a href="https://www.linkedin.com/in/komail-ahmad" target="_blank" rel="noopener" aria-label="LinkedIn" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="mailto:komikhalils091@gmail.com" aria-label="Email" title="Email"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>&copy; 2025 Komail Ahmad. All rights reserved.</span>
+            <span>Made with <i class="fas fa-heart"></i> for students everywhere</span>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>

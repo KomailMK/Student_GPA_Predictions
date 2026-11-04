@@ -1,84 +1,66 @@
 {% extends 'base.html' %}
-
-{% block title %}Sign Up - GPA Predictor{% endblock %}
-
+{% from 'partials/auth_aside.html' import auth_aside %}
+{% block title %}Create Account — GPA Predictor{% endblock %}
 {% block content %}
-<div class="form-container">
-    <div class="form-header">
-        <h1 class="animated-heading">Create Account</h1>
-        <p>Join the future of academic prediction</p>
-    </div>
-    
-    <form action="{{ url_for('signup') }}" method="POST">
-        <div class="form-group">
-            <label for="name" class="form-label">Full Name</label>
-            <input type="text" id="name" name="name" class="form-input" placeholder="Enter your full name" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="email" class="form-label">Email Address</label>
-            <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email address" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" id="password" name="password" class="form-input" placeholder="Create a strong password" required>
-            <i class="fas fa-eye password-toggle"></i>
-        </div>
-        
-        <button type="submit" class="btn btn-primary btn-block">
-            <span>Create Account</span>
-        </button>
-    </form>
-    
-    <div class="form-footer">
-        <p>Already have an account? <a href="{{ url_for('signin') }}">Sign In</a></p>
-    </div>
-</div>
+<section class="auth-shell">
+    {{ auth_aside(
+        'Join in under a minute',
+        'Your semester, <em>forecasted</em>.',
+        'Create a free account to get personalised GPA predictions and see which habits move the needle.',
+        [('fa-envelope-circle-check', 'Quick email verification'), ('fa-fingerprint', 'Credentials hashed with SHA-256'), ('fa-chart-simple', 'Unlimited predictions')],
+        'Success is the sum of small efforts, repeated day in and day out.',
+        'Robert Collier'
+    ) }}
 
-<div class="cyberpunk-decoration left"></div>
-<div class="cyberpunk-decoration right"></div>
-{% endblock %}
+    <div class="auth-card" data-aos="fade-left" data-aos-delay="100">
+        <div class="auth-header">
+            <h1>Create account</h1>
+            <p>We'll send a 6-digit code to verify your email.</p>
+        </div>
 
-{% block extra_css %}
-<style>
-    .cyberpunk-decoration {
-        position: absolute;
-        width: 200px;
-        height: 200px;
-        z-index: -1;
-    }
-    
-    .cyberpunk-decoration.left {
-        top: 20%;
-        left: 5%;
-        background: linear-gradient(45deg, var(--accent-primary), transparent);
-        filter: blur(60px);
-        opacity: 0.4;
-        animation: pulse 4s infinite alternate;
-    }
-    
-    .cyberpunk-decoration.right {
-        bottom: 20%;
-        right: 5%;
-        background: linear-gradient(45deg, var(--accent-secondary), transparent);
-        filter: blur(60px);
-        opacity: 0.4;
-        animation: pulse 4s infinite alternate-reverse;
-    }
-    
-    .animated-heading span {
-        display: inline-block;
-        opacity: 0;
-        transform: translateY(20px);
-        animation: fadeInUp 0.5s forwards;
-    }
-    
-    @keyframes fadeInUp {
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
+        <form action="{{ url_for('signup') }}" method="POST" class="auth-form js-validate" novalidate>
+            <div class="field">
+                <label for="name">Full name</label>
+                <div class="input-wrap">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="name" name="name" class="form-input" placeholder="Komail Ahmad" autocomplete="name" required>
+                </div>
+                <p class="field-error" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+                <label for="email">Email address</label>
+                <div class="input-wrap">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="name@university.edu" autocomplete="email" required>
+                </div>
+                <p class="field-error" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <div class="input-wrap">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Create a strong password" autocomplete="new-password" required data-strength>
+                    <button type="button" class="password-toggle" aria-label="Show password">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="strength" aria-hidden="true">
+                    <div class="strength-bars"><i></i><i></i><i></i><i></i></div>
+                    <span class="strength-label">Use 8+ characters with a mix of letters, numbers &amp; symbols</span>
+                </div>
+                <p class="field-error" aria-live="polite"></p>
+            </div>
+
+            {% include 'partials/form_errors.html' %}
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Create account <i class="fas fa-arrow-right"></i></button>
+        </form>
+
+        <p class="auth-footer">
+            Already registered? <a href="{{ url_for('signin') }}" class="link-underline">Sign in</a>
+        </p>
+    </div>
+</section>
 {% endblock %}

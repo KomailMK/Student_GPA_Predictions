@@ -1,0 +1,21 @@
+{% macro auth_aside(kicker, title, text, perks, quote, author) %}
+<aside class="auth-aside" data-aos="fade-right">
+    <span class="aside-orb orb-1" aria-hidden="true"></span>
+    <span class="aside-orb orb-2" aria-hidden="true"></span>
+    <div class="aside-top">
+        <span class="aside-kicker">{{ kicker }}</span>
+        <h2>{{ title|safe }}</h2>
+        <p>{{ text }}</p>
+        <ul class="aside-perks">
+            {% for icon, label in perks %}
+                <li><span><i class="fas {{ icon }}"></i></span>{{ label }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <figure class="aside-quote">
+        <i class="fas fa-quote-left"></i>
+        <blockquote>{{ quote }}</blockquote>
+        <figcaption>— {{ author }}</figcaption>
+    </figure>
+</aside>
+{% endmacro %}

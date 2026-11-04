@@ -1,220 +1,152 @@
 {% extends 'base.html' %}
-
-{% block title %}Predict Your GPA - GPA Predictor{% endblock %}
-
+{% block title %}Your Workspace — GPA Predictor{% endblock %}
 {% block content %}
-<div class="prediction-container">
-    <div class="form-header text-center">
-        <h1 class="animated-heading">Predict Your GPA</h1>
-        <p>Enter your academic details to get a prediction of your future GPA</p>
-    </div>
-    
-    <div class="card prediction-form">
-        <form action="{{ url_for('index') }}" method="POST" id="prediction-form">
-            <div class="form-group">
-                <label for="attendance" class="form-label">Attendance Percentage</label>
-                <input type="range" id="attendance" name="attendance" class="form-range" min="0" max="100" step="1" value="80">
-                <div class="range-value-container">
-                    <span class="range-value" id="attendance-value">80%</span>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="study-hours" class="form-label">Study Hours per Week</label>
-                <input type="range" id="study-hours" name="study-hours" class="form-range" min="0" max="20" step="1" value="10">
-                <div class="range-value-container">
-                    <span class="range-value" id="study-hours-value">10 hours</span>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="previous-cgpa" class="form-label">Previous CGPA</label>
-                <input type="range" id="previous-cgpa" name="previous-cgpa" class="form-range" min="0" max="4" step="0.01" value="3">
-                <div class="range-value-container">
-                    <span class="range-value" id="previous-cgpa-value">3.00</span>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="quizzes-performance" class="form-label">Quizzes Performance</label>
-                <input type="range" id="quizzes-performance" name="quizzes-performance" class="form-range" min="0" max="100" step="1" value="75">
-                <div class="range-value-container">
-                    <span class="range-value" id="quizzes-performance-value">75%</span>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="class-participation" class="form-label">Class Participation</label>
-                <input type="range" id="class-participation" name="class-participation" class="form-range" min="0" max="10" step="1" value="7">
-                <div class="range-value-container">
-                    <span class="range-value" id="class-participation-value">7/10</span>
-                </div>
-            </div>
-            
-            <button type="submit" class="btn btn-primary btn-block">
-                <span>Calculate Prediction</span>
-            </button>
-        </form>
-    </div>
-    
-    {% if predicted_gpa is not none %}
-    <div class="result-container">
-        <h2>Your Predicted GPA</h2>
-        <div class="result-value">{{ predicted_gpa }}</div>
-        <p class="result-message">
-            {% if predicted_gpa >= 3.5 %}
-            Excellent! You're on track for outstanding academic performance.
-            {% elif predicted_gpa >= 3.0 %}
-            Great job! You're performing well academically.
-            {% elif predicted_gpa >= 2.5 %}
-            Good work! With some additional effort, you can improve further.
-            {% elif predicted_gpa >= 2.0 %}
-            You're passing, but there's room for improvement.
-            {% else %}
-            You may need to focus more on your studies to improve your GPA.
-            {% endif %}
-        </p>
-    </div>
-    {% endif %}
-</div>
-{% endblock %}
+{% set factors = [
+    {'id': 'attendance', 'label': 'Attendance', 'hint': 'How often you show up to class', 'icon': 'fa-calendar-check', 'tone': 'terracotta', 'min': 0, 'max': 100, 'step': 1, 'default': 80, 'format': 'pct', 'bounds': ['0%', '50%', '100%']},
+    {'id': 'study-hours', 'label': 'Study hours', 'hint': 'Focused self-study per week', 'icon': 'fa-book-open-reader', 'tone': 'amber', 'min': 0, 'max': 20, 'step': 1, 'default': 10, 'format': 'hrs', 'bounds': ['0h', '10h', '20h']},
+    {'id': 'previous-cgpa', 'label': 'Previous CGPA', 'hint': 'Your cumulative GPA so far', 'icon': 'fa-award', 'tone': 'plum', 'min': 0, 'max': 4, 'step': 0.01, 'default': 3.00, 'format': 'gpa', 'bounds': ['0.00', '2.00', '4.00']},
+    {'id': 'quizzes-performance', 'label': 'Quiz performance', 'hint': 'Average score across quizzes', 'icon': 'fa-clipboard-check', 'tone': 'sage', 'min': 0, 'max': 100, 'step': 1, 'default': 75, 'format': 'pct', 'bounds': ['0%', '50%', '100%']},
+    {'id': 'class-participation', 'label': 'Participation', 'hint': 'How actively you engage in class', 'icon': 'fa-hand', 'tone': 'coral', 'min': 0, 'max': 10, 'step': 1, 'default': 7, 'format': 'of10', 'bounds': ['0', '5', '10']}
+] %}
 
-{% block extra_css %}
-<style>
-    .prediction-container {
-        max-width: 800px;
-        margin: 0 auto;
-    }
-    
-    .text-center {
-        text-align: center;
-    }
-    
-    .prediction-form {
-        margin-top: 2rem;
-    }
-    
-    .form-range {
-        width: 100%;
-        height: 8px;
-        -webkit-appearance: none;
-        appearance: none;
-        background: var(--input-bg);
-        border-radius: 4px;
-        outline: none;
-        margin-top: 0.5rem;
-    }
-    
-    .form-range::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: var(--accent-primary);
-        cursor: pointer;
-        box-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
-        transition: all 0.2s ease;
-    }
-    
-    .form-range::-webkit-slider-thumb:hover {
-        transform: scale(1.2);
-        box-shadow: 0 0 15px rgba(0, 240, 255, 0.9);
-    }
-    
-    .range-value-container {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 0.25rem;
-    }
-    
-    .range-value {
-        font-family: 'Orbitron', sans-serif;
-        color: var(--accent-primary);
-        font-weight: 600;
-    }
-    
-    .result-message {
-        font-size: 1.1rem;
-        margin-top: 1rem;
-    }
-    
-    .animated-heading span {
-        display: inline-block;
-        opacity: 0;
-        transform: translateY(20px);
-        animation: fadeInUp 0.5s forwards;
-    }
-    
-    @keyframes fadeInUp {
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
+<section class="workspace-head" data-aos="fade-up">
+    <div>
+        <span class="kicker"><i class="fas fa-hand-sparkles"></i> Welcome back</span>
+        <h1>Your GPA <em>workspace</em></h1>
+        <p>Slide each factor to match your semester so far, then let the model do the rest.</p>
+    </div>
+    <span class="user-chip"><i class="fas fa-circle-user"></i> {{ session.get('email', 'Signed in') }}</span>
+</section>
+
+<div class="workspace-grid">
+    <form action="{{ url_for('index') }}" method="POST" id="prediction-form" class="factor-form" data-aos="fade-up" data-aos-delay="100">
+        <div class="factor-list">
+            {% for f in factors %}
+                <div class="factor-card tone-{{ f.tone }}">
+                    <div class="factor-top">
+                        <span class="factor-icon"><i class="fas {{ f.icon }}"></i></span>
+                        <div class="factor-text">
+                            <label for="{{ f.id }}">{{ f.label }}</label>
+                            <small>{{ f.hint }}</small>
+                        </div>
+                        <output class="range-value" id="{{ f.id }}-value" for="{{ f.id }}"></output>
+                    </div>
+                    <input type="range" id="{{ f.id }}" name="{{ f.id }}" class="form-range"
+                           min="{{ f.min }}" max="{{ f.max }}" step="{{ f.step }}"
+                           value="{{ request.form.get(f.id, f.default) }}" data-format="{{ f.format }}">
+                    <div class="range-bounds">{% for b in f.bounds %}<span>{{ b }}</span>{% endfor %}</div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% include 'partials/form_errors.html' %}
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">
+            <i class="fas fa-wand-magic-sparkles"></i> <span>Predict my GPA</span>
+        </button>
+    </form>
+
+    <aside class="result-card {% if predicted_gpa is not none %}has-result{% endif %}" id="result-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="result-head">
+            <span>Your forecast</span>
+            <span class="scale-tag">4.00 scale</span>
+        </div>
+
+        {% if predicted_gpa is not none %}
+            {% if predicted_gpa >= 3.5 %}
+                {% set standing, tone, msg = 'Excellent', 'high', "You're on track for an outstanding semester. Keep that rhythm going — it's clearly working." %}
+            {% elif predicted_gpa >= 3.0 %}
+                {% set standing, tone, msg = 'Great job', 'high', "You're performing solidly above average. A little extra polish could lift you into the top tier." %}
+            {% elif predicted_gpa >= 2.5 %}
+                {% set standing, tone, msg = 'Satisfactory', 'mid', "You're on steady ground. Consistent effort over the coming weeks can push you above 3.0." %}
+            {% elif predicted_gpa >= 2.0 %}
+                {% set standing, tone, msg = 'Passing', 'mid', "You're passing, with real room to grow. Focusing on study hours and quiz prep will make the biggest difference." %}
+            {% else %}
+                {% set standing, tone, msg = 'At risk', 'low', "This is a signal, not a verdict. Reach out to your advisor early — small changes now go a long way." %}
+            {% endif %}
+
+            <div class="ring-wrap standing-{{ tone }}">
+                <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+                    <circle class="ring-track" cx="100" cy="100" r="86" />
+                    <circle class="ring-progress" cx="100" cy="100" r="86" pathLength="100" />
+                </svg>
+                <div class="ring-center">
+                    <strong class="ring-value" data-ring-value="{{ '%.2f'|format(predicted_gpa) }}" aria-label="Predicted GPA {{ '%.2f'|format(predicted_gpa) }}">0.00</strong>
+                    <span class="ring-scale">predicted GPA</span>
+                </div>
+            </div>
+
+            <div class="standing standing-{{ tone }}">
+                <span class="standing-pill">{{ standing }}</span>
+                <p class="reveal-text">{{ msg }}</p>
+            </div>
+        {% else %}
+            <div class="ring-wrap is-empty">
+                <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+                    <circle class="ring-track" cx="100" cy="100" r="86" />
+                </svg>
+                <div class="ring-center">
+                    <strong class="ring-value">--.--</strong>
+                    <span class="ring-scale">awaiting input</span>
+                </div>
+            </div>
+            <div class="standing">
+                <p class="empty-msg">Move the sliders and hit <strong>Predict my GPA</strong> to see your forecast here.</p>
+            </div>
+        {% endif %}
+
+        <div class="summary">
+            <span class="summary-title">Your inputs</span>
+            <div class="chip-row">
+                {% for f in factors %}
+                    <span class="chip"><i class="fas {{ f.icon }}"></i> <b id="summary-{{ f.id }}"></b></span>
+                {% endfor %}
+            </div>
+        </div>
+    </aside>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Update range slider values
-    const rangeInputs = {
-        'attendance': {
-            input: document.getElementById('attendance'),
-            value: document.getElementById('attendance-value'),
-            format: (val) => `${val}%`
-        },
-        'study-hours': {
-            input: document.getElementById('study-hours'),
-            value: document.getElementById('study-hours-value'),
-            format: (val) => `${val} hours`
-        },
-        'previous-cgpa': {
-            input: document.getElementById('previous-cgpa'),
-            value: document.getElementById('previous-cgpa-value'),
-            format: (val) => val.toFixed(2)
-        },
-        'quizzes-performance': {
-            input: document.getElementById('quizzes-performance'),
-            value: document.getElementById('quizzes-performance-value'),
-            format: (val) => `${val}%`
-        },
-        'class-participation': {
-            input: document.getElementById('class-participation'),
-            value: document.getElementById('class-participation-value'),
-            format: (val) => `${val}/10`
-        }
-    };
-    
-    // Initialize values
-    Object.values(rangeInputs).forEach(item => {
-        item.value.textContent = item.format(parseFloat(item.input.value));
-        
-        // Add event listener for real-time updates
-        item.input.addEventListener('input', function() {
-            item.value.textContent = item.format(parseFloat(this.value));
+    (function () {
+        const formats = {
+            pct: (v) => `${v}%`,
+            hrs: (v) => `${v} hrs`,
+            gpa: (v) => v.toFixed(2),
+            of10: (v) => `${v}/10`
+        };
+
+        document.querySelectorAll('#prediction-form .form-range').forEach((input) => {
+            const valueEl = document.getElementById(`${input.id}-value`);
+            const summaryEl = document.getElementById(`summary-${input.id}`);
+            const fmt = formats[input.dataset.format] || ((v) => v);
+
+            const update = () => {
+                const v = parseFloat(input.value);
+                const pct = ((v - input.min) / (input.max - input.min)) * 100;
+                const text = fmt(v);
+                input.style.setProperty('--fill', `${pct}%`);
+                valueEl.textContent = text;
+                if (summaryEl) summaryEl.textContent = text;
+            };
+            update();
+            input.addEventListener('input', update);
         });
-    });
-    
-    // Add animation to form submission
-    const form = document.getElementById('prediction-form');
-    if (form) {
-        form.addEventListener('submit', function() {
+
+        const form = document.getElementById('prediction-form');
+        form.addEventListener('submit', function () {
             const button = this.querySelector('button[type="submit"]');
-            button.innerHTML = '<span>Calculating...</span>';
+            button.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span>Crunching the numbers…</span>';
+            button.classList.add('is-loading');
             button.disabled = true;
-            
-            // Add loading animation
-            const loadingSpan = document.createElement('span');
-            loadingSpan.classList.add('loading-animation');
-            button.appendChild(loadingSpan);
         });
-    }
-    
-    // Add animation to result container if it exists
-    const resultContainer = document.querySelector('.result-container');
-    if (resultContainer) {
-        resultContainer.classList.add('animate-result');
-    }
+
+        // On smaller screens, bring the fresh result into view.
+        const result = document.getElementById('result-card');
+        if (result.classList.contains('has-result') && window.matchMedia('(max-width: 960px)').matches) {
+            setTimeout(() => result.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
+        }
+    })();
 </script>
 {% endblock %}
