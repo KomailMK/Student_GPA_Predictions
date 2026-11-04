@@ -286,7 +286,6 @@ To recreate the dataset and retrain the model locally at any time:
 
 ## Security Architecture
 
-- **Database-Driven Accounts**: Replaced flat-file `.txt` storage with a relational MySQL database.
 - **SQL Injection Prevention**: All queries utilize parameterized `%s` statements executed through PyMySQL.
 - **Hashed Passwords**: User passwords are never saved in plain text. Credentials use SHA-256 digests (`hashlib.sha256`) during registration and authentication.
 - **Two-Factor Email Verification**: Newly registered accounts remain pending in temporary session memory until the 6-digit OTP received via Gmail TLS SMTP (port 587) is validated. Only upon verification is the record committed to the MySQL database.
