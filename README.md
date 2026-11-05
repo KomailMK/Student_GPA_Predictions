@@ -51,12 +51,7 @@ The machine learning pipeline analyzes these factors and outputs a predicted GPA
 - **MySQL Database Authentication**: User accounts, email verification records, and SHA-256 password digests are persisted in a relational MySQL database with parameterized queries (`pymysql`) and indexing.
 - **Auto Database Initialization**: The application automatically checks, creates the database (`gpa_predictor`), and provisions the `users` table upon server startup.
 - **High-Precision ML Forecasting**: 97.6% $R^2$ accuracy model trained on 4,000 synthesized student records with realistic academic correlation weighting.
-- **Instant In-Place Prediction (Zero Full-Page Reload)**: "Predict my GPA" calculates forecasts asynchronously via AJAX/fetch, updating the gauge and text without refreshing the webpage.
-- **Dynamic Circular Progress Ring**: Animated SVG gauge that fills to the predicted score, color-coded by standing (Sage green, Amber, Coral, Rose).
-- **Word-by-Word Blur Reveal**: Predicted standing narrative smoothly transitions from blurred to sharp, word-by-word.
-- **Modern Responsive HTML Verification Emails**: Automated 6-digit verification code dispatched via SMTP with multi-part MIME support, featuring a custom-styled HTML body matching the website's warm palette, letter-spaced OTP code box, and credentials card.
 - **Split-Layout Authentication**: Elegant dual-pane layout for Sign In, Sign Up, and Verification with a 6-cell interactive OTP digit input and asynchronous resend cooldown.
-- **Contextual Form Validation**: Client- and server-side errors render directly below the corresponding inputs with gentle shake feedback; non-intrusive auto-dismissing toast alerts for successes.
 - **Responsive & Accessible**: Floating glassmorphic navbar with mobile drawer, full viewport clipping (`overflow-x: clip`), smooth animations via AOS, and complete support down to 320px mobile screens.
 
 ---
@@ -291,7 +286,6 @@ To recreate the dataset and retrain the model locally at any time:
 
 ## Security Architecture
 
-- **Database-Driven Accounts**: Replaced flat-file `.txt` storage with a relational MySQL database.
 - **SQL Injection Prevention**: All queries utilize parameterized `%s` statements executed through PyMySQL.
 - **Hashed Passwords**: User passwords are never saved in plain text. Credentials use SHA-256 digests (`hashlib.sha256`) during registration and authentication.
 - **Two-Factor Email Verification**: Newly registered accounts remain pending in temporary session memory until the 6-digit OTP received via Gmail TLS SMTP (port 587) is validated. Only upon verification is the record committed to the MySQL database.
