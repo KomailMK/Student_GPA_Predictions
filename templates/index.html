@@ -8,7 +8,6 @@
     {'id': 'quizzes-performance', 'label': 'Quiz performance', 'hint': 'Average score across quizzes', 'icon': 'fa-clipboard-check', 'tone': 'sage', 'min': 0, 'max': 100, 'step': 1, 'default': 75, 'format': 'pct', 'bounds': ['0%', '50%', '100%']},
     {'id': 'class-participation', 'label': 'Participation', 'hint': 'How actively you engage in class', 'icon': 'fa-hand', 'tone': 'coral', 'min': 0, 'max': 10, 'step': 1, 'default': 7, 'format': 'of10', 'bounds': ['0', '5', '10']}
 ] %}
-
 <section class="workspace-head" data-aos="fade-up">
     <div>
         <span class="kicker"><i class="fas fa-hand-sparkles"></i> Welcome back</span>
@@ -17,7 +16,6 @@
     </div>
     <span class="user-chip"><i class="fas fa-circle-user"></i> {{ session.get('email', 'Signed in') }}</span>
 </section>
-
 <div class="workspace-grid">
     <form action="{{ url_for('index') }}" method="POST" id="prediction-form" class="factor-form" data-aos="fade-up" data-aos-delay="100">
         <div class="factor-list">
@@ -38,20 +36,16 @@
                 </div>
             {% endfor %}
         </div>
-
         {% include 'partials/form_errors.html' %}
-
         <button type="submit" class="btn btn-primary btn-lg btn-block">
             <i class="fas fa-wand-magic-sparkles"></i> <span>Predict my GPA</span>
         </button>
     </form>
-
     <aside class="result-card {% if predicted_gpa is not none %}has-result{% endif %}" id="result-card" data-aos="fade-up" data-aos-delay="200">
         <div class="result-head">
             <span>Your forecast</span>
             <span class="scale-tag">4.00 scale</span>
         </div>
-
         {% if predicted_gpa is not none %}
             {% if predicted_gpa >= 3.5 %}
                 {% set standing, tone, msg = 'Excellent', 'high', "You're on track for an outstanding semester. Keep that rhythm going, it's clearly working." %}
@@ -65,7 +59,6 @@
                 {% set standing, tone, msg = 'At risk', 'low', "This is a signal, not a verdict. Reach out to your advisor early, small changes now go a long way." %}
             {% endif %}
         {% endif %}
-
         <div class="ring-wrap {% if predicted_gpa is not none %}standing-{{ tone }}{% else %}is-empty{% endif %}" id="forecast-ring-wrap">
             <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
                 <circle class="ring-track" cx="100" cy="100" r="86" />
@@ -78,13 +71,11 @@
                 <span class="ring-scale" id="forecast-ring-scale">{% if predicted_gpa is not none %}predicted GPA{% else %}awaiting input{% endif %}</span>
             </div>
         </div>
-
         <div class="standing {% if predicted_gpa is not none %}standing-{{ tone }} is-visible{% endif %}" id="forecast-standing">
             <span class="standing-pill" id="forecast-pill" {% if predicted_gpa is none %}style="display:none;"{% endif %}>{{ standing if standing else '' }}</span>
             <p class="reveal-text" id="forecast-msg" {% if predicted_gpa is none %}style="display:none;"{% endif %}>{{ msg if msg else '' }}</p>
             <p class="empty-msg" id="forecast-empty-msg" {% if predicted_gpa is not none %}style="display:none;"{% endif %}>Move the sliders and hit <strong>Predict my GPA</strong> to see your forecast here.</p>
         </div>
-
         <div class="summary">
             <span class="summary-title">Your inputs</span>
             <div class="chip-row">
@@ -96,7 +87,6 @@
     </aside>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
     (function () {
@@ -106,7 +96,6 @@
             gpa: (v) => v.toFixed(2),
             of10: (v) => `${v}/10`
         };
-
         document.querySelectorAll('#prediction-form .form-range').forEach((input) => {
             const valueEl = document.getElementById(`${input.id}-value`);
             const summaryEl = document.getElementById(`summary-${input.id}`);

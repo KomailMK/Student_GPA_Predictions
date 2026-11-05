@@ -11,14 +11,12 @@
         'A journey of a thousand miles begins with a single step.',
         'Lao Tzu'
     ) }}
-
     <div class="auth-card" data-aos="fade-left" data-aos-delay="100">
         <div class="auth-header">
             <span class="auth-badge"><i class="fas fa-envelope-circle-check"></i></span>
             <h1>Verify your email</h1>
             <p>Enter the code sent to <strong>{{ session.get('email', 'your email') }}</strong>.</p>
         </div>
-
         <form action="{{ url_for('verify_code') }}" method="POST" class="auth-form js-validate" novalidate>
             <div class="field">
                 <label for="otp-0">Verification code</label>
@@ -32,9 +30,7 @@
                 <input type="hidden" id="code" name="code" required data-otp>
                 <p class="field-error" aria-live="polite"></p>
             </div>
-
             {% include 'partials/form_errors.html' %}
-
             <button type="submit" class="btn btn-primary btn-lg btn-block">Verify &amp; create account <i class="fas fa-check"></i></button>
         </form>
 

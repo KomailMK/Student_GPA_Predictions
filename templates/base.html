@@ -20,14 +20,12 @@
         <span class="blob blob-2"></span>
         <span class="blob blob-3"></span>
     </div>
-
     <!-- ===== Navbar ===== -->
     <header class="navbar" id="navbar">
         <a href="{{ url_for('home') }}" class="brand" aria-label="GPA Predictor home">
             <span class="brand-mark"><i class="fas fa-graduation-cap"></i></span>
             <span class="brand-text">GPA <em>Predictor</em></span>
         </a>
-
         <nav class="nav-links" aria-label="Primary">
             <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active{% endif %}">Home</a>
             <a href="{{ url_for('home') }}#how-it-works" class="nav-link">How it works</a>
@@ -36,7 +34,6 @@
                 <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Workspace</a>
             {% endif %}
         </nav>
-
         <div class="nav-actions">
             <a href="https://github.com/KomailMK/Student_GPA_Predictions" target="_blank" rel="noopener" class="icon-btn" aria-label="GitHub repository" title="GitHub repository">
                 <i class="fab fa-github"></i>
@@ -48,12 +45,10 @@
                 <a href="{{ url_for('signup') }}" class="btn btn-primary btn-sm">Get started</a>
             {% endif %}
         </div>
-
         <button class="menu-toggle" id="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
             <span></span><span></span><span></span>
         </button>
     </header>
-
     <!-- ===== Mobile drawer (kept outside the navbar so it can cover the viewport) ===== -->
     <div class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
         <nav class="drawer-links" aria-label="Mobile">
@@ -79,7 +74,6 @@
             </div>
         </div>
     </div>
-
     <!-- ===== Toasts: success / info only. Errors render inline on form pages. ===== -->
     {% set inline_error_pages = ['signin', 'signup', 'verify_code', 'index'] %}
     <div class="toast-stack" id="toast-stack" aria-live="polite">
@@ -99,11 +93,9 @@
             {% endif %}
         {% endwith %}
     </div>
-
     <main class="main-container">
         {% block content %}{% endblock %}
     </main>
-
     <!-- ===== Footer ===== -->
     <footer class="footer">
         <div class="footer-inner">
@@ -115,7 +107,6 @@
                 <p>A friendly forecast for your semester. Five everyday habits in, one honest GPA estimate out so you can plan ahead, not catch up.</p>
                 <a href="mailto:komikhalils091@gmail.com" aria-label="Email" title="Email"><i class="fas fa-envelope"></i></a>
             </div>
-
             <div class="footer-col">
                 <h4>Explore</h4>
                 <a href="{{ url_for('home') }}">Home</a>
@@ -125,7 +116,6 @@
                     <a href="{{ url_for('index') }}">Workspace</a>
                 {% endif %}
             </div>
-
             <div class="footer-col">
                 <h4>Account</h4>
                 {% if session.get('authenticated') %}
@@ -137,7 +127,6 @@
                 {% endif %}
                 <a href="https://github.com/KomailMK/Student_GPA_Predictions" target="_blank" rel="noopener">Source code</a>
             </div>
-
             <div class="footer-col">
                 <h4>Connect</h4>
                 <div class="footer-socials">
@@ -147,13 +136,11 @@
                 </div>
             </div>
         </div>
-
         <div class="footer-bottom">
             <span>&copy; 2025 Komail Ahmad. All rights reserved.</span>
             <span>Made with <i class="fas fa-heart"></i> for students everywhere</span>
         </div>
     </footer>
-
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block extra_js %}{% endblock %}
