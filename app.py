@@ -4,7 +4,6 @@ import random
 import smtplib
 import hashlib
 from email.message import EmailMessage
-
 import joblib
 import numpy as np
 import pandas as pd
@@ -13,13 +12,10 @@ import pymysql.cursors
 from dotenv import load_dotenv
 from email_validator import validate_email, EmailNotValidError
 from flask import Flask, request, render_template, redirect, url_for, session, flash, jsonify
-
 # Force reload of .env file
 load_dotenv(override=True)
-
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")
-
 FEATURE_COLUMNS = [
     'attendance',
     'study_hours',
@@ -27,15 +23,11 @@ FEATURE_COLUMNS = [
     'quiz_performance',
     'class_participation'
 ]
-
-
 def clean_env(key, default=""):
     """Read an environment variable and strip inline comments and surrounding quotes."""
     val = os.environ.get(key, default) or default
     val = str(val).split('#')[0].strip().strip('"').strip("'")
     return val
-
-
 def get_db_connection(include_db=True):
     """Create and return a MySQL connection using configuration from environment variables."""
     host = clean_env("MYSQL_HOST", "localhost")
@@ -43,7 +35,6 @@ def get_db_connection(include_db=True):
     user = clean_env("MYSQL_USER", "root")
     password = clean_env("MYSQL_PASSWORD", "")
     db_name = clean_env("MYSQL_DB", "gpa_predictor")
-
     conn_params = {
         "host": host,
         "port": port,
@@ -55,10 +46,7 @@ def get_db_connection(include_db=True):
     }
     if include_db:
         conn_params["database"] = db_name
-
     return pymysql.connect(**conn_params)
-
-
 def init_db():
     """Ensure the MySQL database and users table exist, and perform one-time migration if legacy users.txt exists."""
     db_name = clean_env("MYSQL_DB", "gpa_predictor")
@@ -68,7 +56,6 @@ def init_db():
         with conn_server.cursor() as cur:
             cur.execute(f"CREATE DATABASE IF NOT EXISTS `{db_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
         conn_server.close()
-
         # Step 2: Ensure users table exists
         conn_db = get_db_connection(include_db=True)
         with conn_db.cursor() as cur:
@@ -85,7 +72,6 @@ def init_db():
                     INDEX idx_email (email)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """)
-
             # Step 3: Optional one-time migration if legacy users.txt exists
             if os.path.exists('users.txt'):
                 try:
@@ -100,27 +86,20 @@ def init_db():
                                 """, ('Legacy User', 'legacy@user.local', h_name, h_email, h_pwd))
                 except Exception as mig_err:
                     print(f"Notice: legacy users.txt migration skipped ({mig_err}).")
-
         conn_db.close()
         print("MySQL database and 'users' table verified successfully.")
     except Exception as e:
         print(f"Warning: Could not initialize MySQL database ({e}). Please verify MySQL is running and .env credentials are correct.")
-
-
 # Initialize MySQL database on startup
 init_db()
-
-
 def load_or_repair_model():
     """Load the GPA model and patch/retrain if a scikit-learn version mismatch occurs."""
     model_path = 'models/final_gpa_model.pkl'
     loaded_model = joblib.load(model_path)
-
     if hasattr(loaded_model, 'named_steps') and 'imputer' in loaded_model.named_steps:
         imputer = loaded_model.named_steps['imputer']
         if not hasattr(imputer, '_fill_dtype'):
             imputer._fill_dtype = getattr(imputer, '_fit_dtype', np.dtype('float64'))
-
     try:
         test_df = pd.DataFrame([[80.0, 10.0, 3.0, 75.0, 7.0]], columns=FEATURE_COLUMNS)
         loaded_model.predict(test_df)
@@ -132,15 +111,12 @@ def load_or_repair_model():
         from sklearn.preprocessing import MinMaxScaler
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.model_selection import train_test_split
-
         data = pd.read_csv('others/student_performance_data.csv')
         for col in FEATURE_COLUMNS + ['final_gpa']:
             data[col] = data[col].fillna(data[col].mean())
-
         X = data[FEATURE_COLUMNS]
         y = data['final_gpa']
         X_train, _, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=42)
-
         pipeline = Pipeline([
             ('imputer', SimpleImputer(strategy='mean')),
             ('scaler', MinMaxScaler()),
@@ -150,15 +126,9 @@ def load_or_repair_model():
         os.makedirs('models', exist_ok=True)
         joblib.dump(pipeline, model_path)
         return pipeline
-
-
 model = load_or_repair_model()
-
-
 def hash_data(data):
     return hashlib.sha256(data.encode()).hexdigest()
-
-
 def is_email_registered(email):
     """Check if the email (plain text, exact hash, or lowercase hash) is registered in the MySQL database."""
     exact_hash = hash_data(email)
