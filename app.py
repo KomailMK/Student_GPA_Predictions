@@ -134,7 +134,6 @@ def is_email_registered(email):
     exact_hash = hash_data(email)
     normalized_hash = hash_data(email.strip().lower())
     clean_email = email.strip()
-
     try:
         conn = get_db_connection()
         try:
@@ -151,42 +150,30 @@ def is_email_registered(email):
     except Exception as e:
         print(f"Database error in is_email_registered: {e}")
         return False
-
-
 def build_verification_email_plain(name, email, code, password):
     user_display = (name or "Student").strip()
     return f"""Hi {user_display}!
-
 Welcome to the Student GPA Prediction System.
-
 YOUR 6-DIGIT VERIFICATION CODE:
 =================================
              {code}
 =================================
-
 Enter this code on the verification page to activate your account.
-
 YOUR ACCOUNT CREDENTIALS:
 - Email: {email}
 - Password: {password}
-
 IMPORTANT: Please save these credentials safely. You will need them whenever you sign in to view your predictions.
-
 If you did not request this verification code, you can safely ignore this message.
-
 --
 Student GPA Prediction System
 High-Accuracy Machine Learning & Academic Intelligence
 """
-
-
 def build_verification_email_html(name, email, code, password):
     user_display = (name or "Student").strip()
     safe_name = html.escape(user_display)
     safe_email = html.escape(email or "")
     safe_password = html.escape(password or "")
     safe_code = html.escape(str(code or ""))
-
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -200,7 +187,6 @@ def build_verification_email_html(name, email, code, password):
             <td align="center">
                 <!-- Outer Card -->
                 <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width:580px; background-color:#FFFFFF; border:1px solid #E8DACB; border-radius:24px; overflow:hidden; box-shadow:0 16px 36px rgba(43,29,23,0.08);">
-                    
                     <!-- Top Brand Bar -->
                     <tr>
                         <td style="padding:28px 36px 22px; background:linear-gradient(135deg, #FFFDFB 0%, #FAF3EB 100%); border-bottom:1px solid #EFE4D6;">
@@ -223,7 +209,6 @@ def build_verification_email_html(name, email, code, password):
                             </table>
                         </td>
                     </tr>
-
                     <!-- Body Content -->
                     <tr>
                         <td style="padding:38px 36px 28px;">
@@ -296,81 +281,63 @@ def build_verification_email_html(name, email, code, password):
     </table>
 </body>
 </html>"""
-
-
 def send_email(email, code, name=None, password=None):
     """Send modern 6-digit verification code email via SMTP with HTML and plain-text alternatives."""
     sender_email = clean_env("SENDER_EMAIL")
     sender_password = clean_env("SENDER_PASSWORD")
     smtp_server = clean_env("SMTP_SERVER", "smtp.gmail.com")
     port = 587
-
     if not sender_email or not sender_password:
         err = "SENDER_EMAIL or SENDER_PASSWORD is empty in your .env file."
         print("Error sending email:", err)
         return False, err
-
     user_name = name if name is not None else request.form.get('name', 'Student')
     user_password = password if password is not None else request.form.get('password', '')
-
     try:
         msg = EmailMessage()
         msg["Subject"] = f"Your Verification Code is {code} | GPA Predictor"
         msg["From"] = f"GPA Predictor <{sender_email}>"
         msg["To"] = email
-
         plain_body = build_verification_email_plain(user_name, email, code, user_password)
         html_body = build_verification_email_html(user_name, email, code, user_password)
-
         msg.set_content(plain_body)
         msg.add_alternative(html_body, subtype='html')
-
         with smtplib.SMTP(smtp_server, port, timeout=15) as server:
             server.ehlo()
             server.starttls()
             server.ehlo()
             server.login(sender_email, sender_password)
             server.send_message(msg)
-
         print(f"Verification code {code} sent to {email}")
         return True, None
     except Exception as e:
         print("Error sending email:", e)
         return False, str(e)
-
-
 @app.route('/')
 def home():
     return render_template('home.html')
-
-
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
         name = request.form['name'].strip()
         email = request.form['email'].strip()
         password = request.form['password']
-
         # 1. Block already-verified emails in MySQL database
         if is_email_registered(email):
             flash("This email is already in use. Please use a different email.", "danger")
             return redirect(url_for('signup'))
-
         # 2. Validate email syntax (skip DNS lookup so local network issues don't block signup)
         try:
             validate_email(email, check_deliverability=False)
         except EmailNotValidError as e:
             flash(str(e), 'error')
             return redirect(url_for('signup'))
-
         # 3. Generate verification code and send email BEFORE saving user
         code = str(random.randint(100000, 999999))
         sent_ok, error_msg = send_email(email, code, name=name, password=password)
-
         if not sent_ok:
             flash(f"Could not send verification email: {error_msg}", "danger")
             return redirect(url_for('signup'))
-
         # 4. Store user in session temporarily until they verify the code on /verify
         session['email'] = email
         session['code'] = code
@@ -382,13 +349,9 @@ def signup():
             'hashed_email': hash_data(email),
             'hashed_password': hash_data(password)
         }
-
         flash("Verification code sent! Please check your inbox.", "success")
         return redirect(url_for('verify_code'))
-
     return render_template('email_input.html')
-
-
 @app.route('/verify', methods=['GET', 'POST'])
 def verify_code():
     is_ajax = (
@@ -396,18 +359,15 @@ def verify_code():
         request.is_json or
         'application/json' in request.headers.get('Accept', '')
     )
-
     if 'pending_user' not in session or 'code' not in session:
         if is_ajax:
             return jsonify({'success': False, 'error': 'Please sign up first to receive a verification code.', 'redirect': url_for('signup')}), 401
         flash("Please sign up first to receive a verification code.", "danger")
         return redirect(url_for('signup'))
-
     if request.method == 'POST':
         user_code = request.form.get('code', '').strip()
         if user_code == session.get('code'):
             pending = session.get('pending_user')
-
             # Save user to MySQL users table ONLY AFTER successful email verification
             if pending and not is_email_registered(pending['raw_email']):
                 try:
@@ -446,8 +406,6 @@ def verify_code():
             flash('Invalid verification code. Please try again.', 'error')
 
     return render_template('verify_code.html')
-
-
 @app.route('/resend', methods=['POST'])
 def resend_code():
     pending = session.get('pending_user')
@@ -456,13 +414,11 @@ def resend_code():
         request.is_json or
         'application/json' in request.headers.get('Accept', '')
     )
-
     if not pending:
         if is_ajax:
             return jsonify({'success': False, 'error': 'Session expired. Please sign up again.', 'redirect': url_for('signup')}), 400
         flash("Session expired. Please sign up again.", "danger")
         return redirect(url_for('signup'))
-
     new_code = str(random.randint(100000, 999999))
     sent_ok, error_msg = send_email(
         pending['raw_email'],
@@ -479,10 +435,7 @@ def resend_code():
         if is_ajax:
             return jsonify({'success': False, 'error': f"Failed to resend code: {error_msg}"}), 500
         flash(f"Failed to resend code: {error_msg}", "danger")
-
     return redirect(url_for('verify_code'))
-
-
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
     if request.method == 'POST':
@@ -520,16 +473,12 @@ def signin():
         flash("Incorrect email or password (or email not yet verified).", "danger")
         return redirect(url_for('signin'))
     return render_template('signin.html')
-
-
 @app.route('/logout')
 def logout():
     session.pop('email', None)
     session.pop('authenticated', None)
     flash("You have been logged out successfully.", "success")
     return redirect(url_for('signin'))
-
-
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     is_ajax = (
@@ -537,13 +486,11 @@ def index():
         request.is_json or
         'application/json' in request.headers.get('Accept', '')
     )
-
     if not session.get('authenticated'):
         if is_ajax:
             return jsonify({'success': False, 'error': 'Please sign in to access this page.', 'redirect': url_for('signin')}), 401
         flash("Please sign in to access this page.", "danger")
         return redirect(url_for('signin'))
-
     predicted_gpa = None
     if request.method == 'POST':
         try:
@@ -556,7 +503,6 @@ def index():
             print(f"Form data received: Attendance={attendance}, Study Hours={study_hours}, "
                   f"Previous CGPA={previous_cgpa}, Quizzes Performance={quizzes_performance}, "
                   f"Class Participation={class_participation}")
-
             features_df = pd.DataFrame(
                 [[attendance, study_hours, previous_cgpa, quizzes_performance, class_participation]],
                 columns=FEATURE_COLUMNS
@@ -565,7 +511,6 @@ def index():
             predicted_gpa = float(np.clip(prediction[0], 0, 4))
             predicted_gpa = round(predicted_gpa, 2)
             print(f"Predicted GPA: {predicted_gpa}")
-
             # Standing evaluation
             if predicted_gpa >= 3.5:
                 standing, tone, msg = 'Excellent', 'high', "You're on track for an outstanding semester. Keep that rhythm going, it's clearly working."
@@ -577,7 +522,6 @@ def index():
                 standing, tone, msg = 'Passing', 'mid', "You're passing, with real room to grow. Focusing on study hours and quiz prep will make the biggest difference."
             else:
                 standing, tone, msg = 'At risk', 'low', "This is a signal, not a verdict. Reach out to your advisor early, small changes now go a long way."
-
             if is_ajax:
                 return jsonify({
                     'success': True,
@@ -598,9 +542,6 @@ def index():
             if is_ajax:
                 return jsonify({'success': False, 'error': f"Error during prediction: {str(e)}"}), 400
             flash(f"Error during prediction: {e}", "danger")
-
     return render_template('index.html', predicted_gpa=predicted_gpa)
-
-
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
