@@ -56,7 +56,7 @@ The machine learning pipeline analyzes these factors and outputs a predicted GPA
 
 ---
 
-## Model Architecture & Performance
+## Model Architecture & Performance.
 
 The predictive model is structured as a scikit-learn `Pipeline`:
 
