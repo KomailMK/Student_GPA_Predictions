@@ -198,7 +198,7 @@ Student-GPA-Prediction-System/
 
 1. **Clone or download the project folder**:
    ```bash
-   git clone https://github.com/komailahmad/gpa-prediction-system.git
+   git clone https://github.com/KomailMK/gpa-prediction-system.git
    cd gpa-prediction-system
    ```
 
